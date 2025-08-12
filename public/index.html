@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/logo.png" />
+    
+    <!-- Enhanced viewport for mobile fullscreen experience -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, orientation=auto" />
+    
+    <!-- PWA and App-like behavior -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="KeyCraft" />
+    
+    <!-- iOS Safari specific meta tags for app-like behavior -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="KeyCraft" />
+    
+    <!-- Theme colors -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="msapplication-navbutton-color" content="#000000" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- Prevent address bar from showing on scroll (Android) -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Windows specific -->
+    <meta name="msapplication-starturl" content="/" />
+    <meta name="msapplication-TileColor" content="#000000" />
+    
+    <!-- Description -->
+    <meta name="description" content="KeyCraft - Professional piano roll MIDI editor for web and mobile. Create, edit, and compose music with our advanced piano roll interface." />
+    <meta name="keywords" content="piano roll, MIDI editor, music, composer, DAW, web audio, mobile music" />
+    
+    <!-- Apple touch icon -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/logo.png" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    
+    <title>KeyCraft | Piano Roll Editor</title>
+    
+    <!-- Inline critical CSS for preventing browser UI on mobile -->
+    <style>
+      /* Prevent pull-to-refresh and overscroll */
+      html, body {
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      
+      /* Hide address bar on mobile browsers */
+      @media screen and (max-width: 768px) {
+        html {
+          height: 100vh;
+          height: -webkit-fill-available;
+        }
+        
+        body {
+          min-height: 100vh;
+          min-height: -webkit-fill-available;
+        }
+      }
+      
+      /* Fullscreen API styles */
+      :-webkit-full-screen {
+        width: 100vw !important;
+        height: 100vh !important;
+      }
+      
+      :-moz-full-screen {
+        width: 100vw !important;
+        height: 100vh !important;
+      }
+      
+      :fullscreen {
+        width: 100vw !important;
+        height: 100vh !important;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    
+    <!-- Fullscreen API JavaScript -->
+    <script>
+      // Request fullscreen on user interaction (if supported)
+      function requestFullscreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
+        }
+      }
+      
+      // Auto-hide address bar on mobile
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          window.scrollTo(0, 1);
+        }, 0);
+      });
+      
+      // Handle orientation changes
+      window.addEventListener('orientationchange', function() {
+        setTimeout(function() {
+          window.scrollTo(0, 1);
+        }, 500);
+      });
+      
+      // Prevent default touch behaviors that might show browser UI
+      document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+      
+      // Prevent zoom gestures
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', function(event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+          event.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, false);
+    </script>
+  </body>
+</html>
