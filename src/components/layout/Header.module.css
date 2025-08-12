@@ -1,0 +1,352 @@
+.header {
+  background-color: #000;
+  padding: 12px 0px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+}
+
+/* 
+  Add global padding beneath the header to ensure content is not hidden under the fixed header.
+  This utility class can be applied to the main content wrapper in your layout.
+*/
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  z-index: 1010;
+}
+
+.logo {
+  height: auto;
+  width: 50px;
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.logoText {
+  color: #fff;
+  font-family: var(--font-major-mono-display), monospace;
+  font-size: 32px;
+  font-weight: 600;
+  margin-left: 12px;
+  line-height: 1;
+}
+
+.navigation {
+  display: flex;
+  gap: 32px;
+  margin: 0 auto;
+  align-items: center;
+}
+
+.navLink {
+  color: white;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.navLink:hover {
+  opacity: 0.8;
+}
+
+/* Styles for the highlighted Start KeyCraft tab */
+.midiPlayerLink {
+  background-color: #ffffff; /* White background for emphasis */
+  color: #000000;            /* Black text for contrast */
+  padding: 6px 15px;         /* Vertical and horizontal padding */
+  border-radius: 20px;       /* Fully rounded corners */
+  font-weight: 500;          /* Consistent with other navLinks */
+  line-height: 1.2;          /* Adjust for better text centering if needed */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.midiPlayerLink:hover {
+  background-color: #c0d9e9; /* Slightly darker blue on hover */
+  color: #000000;
+  opacity: 1;                /* Override default navLink hover opacity */
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.desktopActions {
+  /* Styles specific to desktop actions if any, otherwise inherits .actions */
+}
+
+.signInButton {
+  color: white;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  background-color: transparent; /* Explicitly transparent */
+}
+
+.signInButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.downloadButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: white;
+  color: black;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: opacity 0.2s ease;
+}
+
+.downloadButton:hover {
+  opacity: 0.9;
+}
+
+.loadingButton {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.windowsIcon {
+  display: flex;
+  align-items: center;
+}
+
+/* Hamburger Button Styles */
+.hamburgerButton {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 1010;
+}
+
+.hamburgerButton svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Mobile Navigation Styles */
+.mobileNavigationContainer {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #000;
+
+  padding: 16px 24px;
+  z-index: 1005;
+}
+
+.mobileNavigation {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobileNavLink {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 8px 0;
+}
+
+/* Styles for the highlighted Start KeyCraft tab in mobile */
+.midiPlayerLinkMobile {
+  background-color: #ffffff;
+  color: #000000;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: 500;
+  display: inline-block; /* Ensures padding and border-radius apply correctly */
+  text-align: center;
+  margin: 4px auto; /* Centering if it's block-ish or adjust as needed */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.midiPlayerLinkMobile:hover {
+  background-color: #c0d9e9;
+  color: #000000;
+  opacity: 1;
+}
+
+.mobileActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+ 
+}
+
+.mobileSignInButton,
+.mobileDownloadButton {
+  width: 100%;
+  text-align: center;
+}
+
+.mobileSignOutButton:hover {
+  background-color: rgba(255, 255, 255, 0.2); /* Slightly lighter on hover for mobile */
+}
+
+/* Styles for User Info and Sign Out Button */
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white; /* Ensure text (name) is white */
+}
+
+.userInfo span {
+  font-size: 14px;
+}
+
+.userAvatar {
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  object-fit: cover;
+}
+
+.userNameLink {
+  color: white;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.userNameLink:hover {
+  opacity: 0.8;
+}
+
+/* Mobile User Info and Sign Out */
+.mobileUserInfo {
+  display: flex;
+  align-items: center; /* Align items horizontally in mobile dropdown */
+  gap: 12px;
+  padding: 10px 0; 
+  width: 100%;
+  color: white; /* Ensure text is white for mobile */
+}
+
+.mobileUserInfo span {
+  font-size: 15px; /* Reduced from 16px */
+  color: white;
+}
+
+.userAvatarMobile {
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  object-fit: cover;
+  width: 28px; /* Explicit size if not set by Image component props effectively */
+  height: 28px;
+}
+
+.userNameLinkMobile {
+  color: white;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+/* Ensure launch editor button in mobile also takes full width and has top margin */
+.mobileNavigationContainer .launchEditorButton {
+  display: block; /* Make it a block to take full width if needed or to stack */
+  width: 100%;
+  text-align: center;
+  margin-top: 0.75rem;
+  margin-left: 0; /* Reset margin for mobile */
+  padding: 0.75rem 1rem; /* Consistent padding with other mobile buttons */
+}
+
+.mobileDownloadButton {
+  width: 100%;
+  text-align: center;
+}
+
+/* Adjustments for .desktopActions if .userInfo is now a child */
+.desktopActions .userInfo {
+  /* It already has display: flex and align-items: center */
+  /* gap is handled by .userInfo itself */
+  /* margin-right might still be useful if the download button is directly next to it */
+}
+
+/* The .desktopActions .signOutButton specific margin might no longer be needed if gap in .userInfo handles it */
+/* Commenting out as a review step, can be removed if not needed */
+/* 
+.desktopActions .signOutButton {
+    margin-left: 10px; 
+}
+*/
+
+/* Ensure loading states are also consistent */
+.actions .signInButton[disabled], /* For potential future disabled state */
+.actions .signInButton.loading, /* If you add a .loading class for text like "Loading..." */
+.desktopActions .signInButton { /* Targeting the loading text div */
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: transparent;
+}
+
+.mobileActions .signInButton {
+    color: white;
+    text-align: left; /* Reaffirm for loading state in mobile */
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Style if it's a div */
+    border-radius: 8px;
+}
+
+/* --- Responsive adjustments --- */
+@media (max-width: 768px) {
+  .navigation, .desktopActions {
+    display: none;
+  }
+
+  .hamburgerButton {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo {
+    width: 45px;
+  }
+  
+  .logoText {
+    font-size: 24px; /* Reduced from 28px */
+    margin-left: 10px;
+    
+  }
+  
+  .container {
+    /* space-between is already set, ensures logo and hamburger are at ends */
+  }
+
+  .mobileNavigationContainer {
+    display: block;
+  }
+
+  /* Adjust header spacer for mobile if header height changes */
+  .headerSpacer {
+    height: 48px; /* Adjust if mobile header is shorter */
+  }
+} 

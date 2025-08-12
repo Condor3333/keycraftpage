@@ -1,0 +1,171 @@
+.hero {
+  color: #fff; /* White text */
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Vertically center content */
+  padding: 60px 70px; /* Adjusted padding, especially top */
+  min-height: calc(100vh - 73px); /* Account for header height */
+  box-sizing: border-box;
+  max-width: 2000px;
+  margin: 0 auto;
+}
+
+.heroContent {
+  margin-top: 0px;
+  /* margin-top: 300px; Removed this, as align-items on .hero handles centering */
+  flex: 1; /* Allow content to take available space on the left */
+  max-width: 1000px; /* Adjusted max-width slightly */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center; /* Center content vertically within its container */
+}
+
+.headline {
+  font-size: 3.2rem; /* Further reduced font size */
+  font-weight: 700;
+  margin-bottom: 24px; /* Adjusted margin */
+  line-height: 1.15; /* Adjusted line-height */
+  background: linear-gradient(90deg, #ffffff, #b3b3b3);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subHeadline {
+  font-size: 18px; /* Adjusted font size */
+  color: #a0a0a0;
+  max-width: 650px; /* Adjusted max-width */
+  margin-bottom: 32px; /* Adjusted margin */
+  line-height: 1.7;
+}
+
+.ctaButtons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 0; /* Removed bottom margin as .heroContent handles spacing */
+}
+
+.button {
+  padding: 14px 28px; /* Adjusted padding */
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 16px; /* Adjusted font size */
+  font-weight: 500;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.secondaryButton {
+  background-color: #5865F2; /* Discord brand color */
+  color: #fff;
+  border: none;
+}
+
+.secondaryButton:hover {
+  background-color: #4752C4; /* Slightly darker on hover for feedback */
+}
+
+.editorPromo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editorIcon {
+  border-radius: 4px; /* Slight rounding if the image isn't already an icon shape */
+}
+
+.editorText {
+  font-size: 15px;
+  color: #a0a0a0;
+}
+
+.videoFrame {
+  margin-top: 0px;
+  width: 600px; /* Adjusted width */
+  height: 450px; /* Adjusted height */
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2); /* Enhanced white glow */
+  margin-left: 40px; /* Adjusted margin */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Slightly more visible border */
+  display: flex; /* For placeholder text centering */
+  align-items: center; /* For placeholder text centering */
+  justify-content: center; /* For placeholder text centering */
+}
+
+.videoPlaceholder {
+  /* Styles for placeholder text, already centered by .videoFrame flex properties */
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 20px;
+}
+
+.loadingButton {
+  opacity: 0.7;
+  cursor: default;
+}
+
+@media (max-width: 1200px) { /* Added another breakpoint for smoother transition */
+  .hero {
+    padding: 40px 50px;
+    flex-direction: column; /* Stack earlier for better spacing */
+    text-align: center;
+  }
+  .heroContent {
+    align-items: center; /* Center content when stacked */
+    max-width: 100%;
+    margin-bottom: 40px;
+    margin-top: 0px; /* Reduced from 520px */
+  }
+   .headline {
+    font-size: 3.8rem;
+  }
+  .subHeadline {
+    max-width: 90%;
+    font-size: 18px;
+  }
+  .videoFrame {
+    width: 90%;
+    max-width: 600px; /* Limit video width on smaller screens */
+    height: auto; /* Maintain aspect ratio */
+    aspect-ratio: 16 / 9;
+    margin-left: 0;
+    margin-top: 20px; /* Reduced from 40px */
+  }
+  .ctaButtons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 40px 20px;
+  }
+
+  .headline {
+    font-size: 3rem; /* Adjusted for mobile */
+  }
+
+  .subHeadline {
+    font-size: 16px;
+  }
+
+  .ctaButtons {
+    flex-direction: column;
+    width: 100%;
+    max-width: 320px; /* Limit button width on mobile */
+    margin: 0 auto; /* Center buttons */
+  }
+
+  .button {
+    width: 100%;
+    text-align: center;
+    font-size: 15px;
+    padding: 12px 24px;
+  }
+}

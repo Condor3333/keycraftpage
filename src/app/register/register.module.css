@@ -1,0 +1,235 @@
+/* Styles for register.module.css - aiming to match the provided image */
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #121212; /* Dark background */
+  color: #ffffff;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.authBox {
+  background-color: #1e1e1e; /* Slightly lighter dark for the box */
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.logoPlaceholder {
+  margin-bottom: 30px;
+}
+
+.authBox h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 30px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.nameFields {
+  display: flex;
+  gap: 15px;
+}
+
+.nameFields > .inputGroup {
+  flex: 1;
+}
+
+.inputGroup {
+  text-align: left;
+}
+
+.inputGroup label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #b0b0b0;
+}
+
+.inputGroup input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #333;
+  background-color: #2a2a2a;
+  color: #ffffff;
+  border-radius: 6px;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inputGroup input::placeholder {
+  color: #777;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: #7c3aed; /* Purple accent like the image */
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+.passwordInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordInputWrapper input {
+  padding-right: 45px; /* Make room for the icon */
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #777;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.passwordToggle:hover {
+  color: #b0b0b0;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.passwordToggle:focus {
+  outline: none;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.passwordToggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submitButton {
+  padding: 12px 20px;
+  background-color: #ffffff;
+  color: #121212;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 10px;
+}
+
+.submitButton:hover {
+  background-color: #f0f0f0;
+}
+
+.submitButton:disabled {
+  background-color: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 30px 0;
+  color: #777;
+}
+
+.separator::before,
+.separator::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #333;
+}
+
+.separator span {
+  padding: 0 15px;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.socialButton {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid #444;
+  background-color: transparent;
+  color: #ffffff;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.socialButton:hover {
+  background-color: #2a2a2a;
+  border-color: #555;
+}
+
+.socialButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.errorText {
+  color: #ff4d4d;
+  font-size: 14px;
+  margin-top: 0px; /* Will be inside form with gap */
+  margin-bottom: -5px; /* Adjust to make space if error appears */
+}
+
+.footerText {
+  margin-top: 30px;
+  font-size: 14px;
+  color: #b0b0b0;
+}
+
+.footerText a {
+  color: #ffffff;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.footerText a:hover {
+  text-decoration: underline;
+}
+
+.termsText {
+  margin-top: 40px;
+  font-size: 12px;
+  color: #777;
+  text-align: center;
+  max-width: 380px;
+}
+
+.termsText a {
+  color: #aaa;
+  text-decoration: none;
+}
+
+.termsText a:hover {
+  text-decoration: underline;
+} 

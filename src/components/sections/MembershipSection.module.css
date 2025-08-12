@@ -1,0 +1,251 @@
+/* New Alternative Pricing Styles (merged) */
+.alt-pricing-section { /* Keeping this as the main wrapper */
+  color: #E0E0E0;
+  padding: 40px 20px; /* Increased top/bottom padding */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  /* min-height: 100vh; */ /* Ensure it takes full viewport height if content is short */
+  width: 100%; /* Ensure container takes full width */
+}
+
+.merged-pricing-container { /* New overall container for titles + grid */
+  max-width: 1200px; /* Consistent max-width */
+  margin: 0 auto;
+  text-align: center; /* Center the titles */
+}
+
+.merged-pricing-header h1 {
+  font-size: 3.5rem; /* Matches original .lp-membership h1 */
+  color: #FFFFFF;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.merged-pricing-subtitle {
+  font-size: 1.5rem; /* Matches original .lp-membership-subtitle */
+  color: #aaaaaa;
+  margin-bottom: 60px; /* Increased space before cards */
+}
+
+.merged-plans-grid {
+  display: grid;
+  /* Attempt to fit 3 columns, then 2, then 1 */
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+  gap: 30px; /* Gap between cards */
+  align-items: stretch; /* Make cards of same height if content differs */
+}
+
+/* Styles for .alt-plan-card, .alt-popular-card, .alt-popular-badge, 
+   .alt-price-wrapper, .alt-original-price, .alt-current-price, 
+   .alt-price-currency, .alt-plan-description, .alt-deploy-button, 
+   .alt-button-year, .alt-button-lifetime remain the same as previously defined 
+   for the two-card layout. They are applied to the cards in the grid. */
+
+.alt-plan-card {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 35px; /* Slightly increased padding */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  text-align: left; /* Content within card is left-aligned */
+  height: 100%; /* Ensure cards stretch if align-items: stretch is used on grid */
+}
+
+.alt-plan-card h3 {
+  font-size: 1.35rem; /* Slightly larger card titles */
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 25px;
+}
+
+.alt-features-list-in-card {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px; /* Space above feature list */
+  margin-bottom: 25px; /* Space below feature list */
+  flex-grow: 1; /* Allows this to push button down if it's the primary growing element */
+}
+
+.alt-features-list-in-card li {
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+  color: #B0B0B0;
+  position: relative;
+  padding-left: 25px; /* Space for the checkmark */
+}
+
+.alt-features-list-in-card li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #7ee787; /* Green checkmark, can be themed */
+  font-weight: bold;
+}
+
+.alt-features-list-in-card li .underline {
+  text-decoration: underline;
+  text-decoration-color: #555;
+  text-underline-offset: 3px;
+}
+
+/* Ensuring the deploy button stays at the bottom */
+.alt-plan-description {
+  /* flex-grow: 1; is removed if .alt-features-list-in-card is meant to be the primary growing element */
+  /* If both description and features list can vary, more complex flex setup might be needed or fixed heights */
+}
+
+.alt-deploy-button {
+  margin-top: auto; /* This will push the button to the bottom of the flex container (.alt-plan-card) */
+}
+
+/* Corner image for each plan card */
+.plan-corner-image {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.plan-corner-image--upright {
+  width: 126px;
+  height: 126px;
+}
+
+.plan-corner-image--grand {
+  width: 150px;
+  height: 150px;
+}
+
+
+/* Responsive adjustments for the new grid and titles */
+@media (max-width: 1024px) {
+  .merged-plans-grid {
+    /* Switches to 2 columns if auto-fit doesn't handle it well for 3 items */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+  }
+}
+
+@media (max-width: 768px) {
+  .merged-plans-grid {
+    grid-template-columns: 1fr; /* Single column for tablets and mobile */
+    max-width: 450px; /* Limit width of single column cards */
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .merged-pricing-header h1 {
+    font-size: 2.8rem;
+  }
+  .merged-pricing-subtitle {
+    font-size: 1.3rem;
+    margin-bottom: 40px;
+  }
+}
+
+@media (max-width: 576px) {
+  .alt-pricing-section {
+    padding: 60px 15px;
+  }
+  .merged-pricing-header h1 {
+    font-size: 2.2rem;
+  }
+  .merged-pricing-subtitle {
+    font-size: 1.1rem;
+  }
+  .alt-plan-card {
+    padding: 25px;
+  }
+  .alt-plan-card h3 {
+    font-size: 1.2rem;
+  }
+  .alt-current-price {
+    font-size: 2.25rem;
+  }
+  .alt-features-list-in-card li {
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+  .alt-popular-badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    top: -10px;
+  }
+}
+
+/* --- Styles from the previous .alt-pricing-section that are still relevant for cards --- */
+/* Ensure these are not duplicated if they were part of the general .alt-plan-card styling before */
+
+.alt-price-wrapper {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: baseline;
+}
+
+.alt-original-price {
+  font-size: 1.5rem;
+  color: #757575;
+  text-decoration: line-through;
+  margin-right: 10px;
+}
+
+.alt-current-price {
+  font-size: 2.75rem;
+  color: #FFFFFF;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.alt-price-currency {
+  font-size: 1rem;
+  color: #A0A0A0;
+  margin-left: 5px;
+}
+
+.alt-features-list-in-card-x {
+  text-decoration: underline;
+  text-decoration-color: #555;
+  text-underline-offset: 3px;
+}
+
+.alt-button-year {
+  background-color: transparent;
+  color: #D0C0FF;
+  border: 2px solid #4A3F6D;
+}
+
+.alt-button-year:hover {
+  background-color: rgba(74, 63, 109, 0.2);
+  border-color: #5C4D8A;
+}
+
+.alt-button-lifetime {
+  background-color: #FF3E9A;
+  color: #FFFFFF;
+  border: 2px solid #FF3E9A;
+}
+
+.alt-button-lifetime:hover {
+  background-color: #E02884;
+  border-color: #E02884;
+}
+
+.alt-popular-card {
+  border: 2px solid #FFA500;
+  box-shadow: 0 0 15px rgba(255, 165, 0, 0.3);
+}
+
+.alt-popular-badge {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background-color: #FFA500;
+  color: #FFFFFF;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 12px;
+  text-transform: uppercase;
+} 

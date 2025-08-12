@@ -1,0 +1,125 @@
+/* Ensuring the main container for the contact page fills the viewport and centers content */
+.contact-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* Align content to the top */
+  min-height: 100vh; /* Take at least full viewport height */
+  background-color: #000000; /* Page background */
+ padding: 50px;
+  width: 100%;
+}
+
+.contact-content {
+  width: 100%;
+  max-width: 700px; /* Max width of the form area */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center title and form */
+}
+
+.contact-title {
+  color: #ffffff;
+  font-size: 2.8rem; /* Adjust size as per image */
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 30px; /* Space between title and form */
+}
+.contact-subtitle {
+  color: #a0a0a0; /* Lighter gray for subtitle */
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 40px; /* Space between subtitle and form */
+  font-weight: normal;
+  line-height: 1.5;
+}
+
+
+.contact-form {
+  /* Dark gray form background */
+  padding: 35px;
+  border-radius: 16px; /* Rounded corners for the form */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Space between form rows/elements */
+  border: 1px solid #383838; /* Subtle border for the form box */
+}
+
+.form-row {
+  display: flex;
+  gap: 20px; /* Space between inputs in a row */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Each group takes equal space in a row */
+  text-align: left;
+}
+
+.form-group.full-width {
+  flex-basis: 100%; /* For the textarea row */
+}
+
+.form-group label {
+  color: #e0e0e0; /* Light gray label text */
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="number"],
+.form-group textarea {
+  background-color: #000000; /* Black background for input fields */
+  border: 1px solid #4a4a4a; /* Slightly visible border for inputs */
+  border-radius: 8px; /* Rounded corners for inputs */
+  padding: 12px 15px;
+  color: #ffffff; /* White text in inputs */
+  font-size: 1rem;
+}
+
+.form-group input[type="text"]::placeholder,
+.form-group input[type="email"]::placeholder,
+.form-group input[type="number"]::placeholder,
+.form-group textarea::placeholder {
+  color: #757575; /* Gray placeholder text */
+}
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.submit-button {
+  background-color: #ffffff; /* Dark gray submit button */
+  color: #000000; /* Light gray text on button */
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start; /* Align button to the left */
+  margin-top: 10px; /* Space above the button */
+  transition: background-color 0.2s ease;
+}
+
+.submit-button:hover {
+  background-color: #454545; /* Slightly lighter on hover */
+}
+
+/* Responsive adjustments if needed */
+@media (max-width: 600px) {
+  .contact-title {
+    font-size: 2.2rem;
+  }
+  .contact-form {
+    padding: 25px;
+  }
+  .form-row {
+    flex-direction: column; /* Stack inputs vertically on small screens */
+    gap: 20px;
+  }
+}

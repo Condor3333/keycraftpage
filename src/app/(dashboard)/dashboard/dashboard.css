@@ -1,0 +1,209 @@
+body {
+  background-color: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.dashboard-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.dashboard-header p {
+  font-size: 1rem;
+  color: #a0a0a0;
+  margin-bottom: 30px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  background-color: #000; /* Black card background */
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #222; /* Add a subtle border */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card h2 {
+  font-size: 1.4rem;
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.info-label {
+  color: #a0a0a0;
+}
+
+.info-value {
+  color: #ffffff; /* Pure white text */
+  font-weight: 500;
+}
+
+.info-value.pro {
+  color: #22c55e; /* Brighter green for Pro status */
+}
+
+.info-value.free {
+  color: #ef4444; /* Brighter red for Free status */
+}
+
+.info-value.verified {
+  color: #22c55e; /* Brighter green for verified */
+}
+
+.info-value.not-verified {
+  color: #ef4444; /* Brighter red for not verified */
+}
+
+.user-avatar-dashboard {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #333;
+}
+
+.avatar-item {
+  align-items: center; /* Vertically align label and avatar */
+}
+
+.dashboard-button {
+  padding: 10px 18px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  border: none;
+  cursor: pointer;
+  display: inline-block; /* For proper styling of <a> tags as buttons */
+  text-align: center;
+}
+
+.dashboard-button:hover {
+  transform: translateY(-1px);
+}
+
+.dashboard-button.primary {
+  background-color: #007bff;
+  color: white;
+}
+.dashboard-button.primary:hover {
+  background-color: #0056b3;
+}
+
+.dashboard-button.secondary {
+  background-color: #6c757d;
+  color: white;
+}
+.dashboard-button.secondary:hover {
+  background-color: #545b62;
+}
+
+.dashboard-button.manage-subscription {
+  background-color: #333;
+  color: white;
+  width: 100%;
+  margin-top: 15px;
+}
+.dashboard-button.manage-subscription:hover {
+  background-color: #444;
+}
+
+.dashboard-button.launch-editor {
+  background-color: #007bff;
+  color: white;
+  width: 100%;
+  margin-bottom: 10px; /* Space between buttons in actions card */
+}
+.dashboard-button.launch-editor:hover {
+  background-color: #0056b3;
+}
+
+.dashboard-button.sign-out {
+  background-color: transparent;
+  color: #ff4d4d;
+  border: 1px solid #ff4d4d;
+  width: 100%;
+}
+.dashboard-button.sign-out:hover {
+  background-color: rgba(255, 77, 77, 0.1);
+}
+
+.dashboard-button.start-keycraft-button {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #ddd;
+  width: 100%;
+}
+.dashboard-button.start-keycraft-button:hover {
+  background-color: #f0f0f0;
+}
+
+.access-denied-container, .loading-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+}
+
+.access-denied-container h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.access-denied-container p {
+  margin-bottom: 1.5rem;
+}
+
+.access-denied-container .dashboard-button {
+  margin: 0.5rem;
+}
+
+.actions-card .dashboard-button {
+    margin-bottom: 10px;
+}
+
+.actions-card .dashboard-button:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr; /* Stack cards on smaller screens */
+  }
+  .dashboard-header h1 {
+    font-size: 2rem;
+  }
+  .dashboard-header p {
+    font-size: 0.9rem;
+  }
+  .card h2 {
+    font-size: 1.2rem;
+  }
+}

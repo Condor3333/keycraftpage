@@ -1,0 +1,38 @@
+{
+    "headers": [
+      {
+        "source": "/(.*)",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self' https://d1o9iute5tpibz.cloudfront.net; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://d1o9iute5tpibz.cloudfront.net https://*.s3.amazonaws.com https://*.s3.*.amazonaws.com; media-src 'self' https://d1o9iute5tpibz.cloudfront.net; font-src 'self';"
+          },
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=63072000; includeSubDomains; preload"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "SAMEORIGIN" 
+          },
+          {
+            "key": "X-XSS-Protection",
+            "value": "1; mode=block" 
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin" 
+          },
+          {
+            "key": "Permissions-Policy", 
+            "value": "geolocation=(), midi=(), microphone=(), camera=(), magnetometer=(), gyroscope=(), payment=()" 
+          }
+        ]
+      }
+  
+    ]
+  } 

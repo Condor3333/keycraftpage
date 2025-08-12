@@ -1,0 +1,411 @@
+/* Animation for the tool cards row */
+@keyframes scrollHorizontal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% / 3));
+  }
+}
+
+/* Main container */
+.featuresContainer {
+  color: #f0f0f0;
+  overflow: hidden;
+  padding-top: 80px;
+  width: 100%;
+  box-sizing: border-box;
+   /* Add scroll margin to account for fixed header */
+}
+
+.features-heading {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 0 4%;
+}
+
+/* Feature Sections */
+.featureSection {
+  display: flex;
+  align-items: center;
+  padding: 60px 4%;
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Specifically target the first feature section for larger video */
+.featureSection:first-of-type {
+  flex-direction: row; /* CHANGED: Back to row for side-by-side */
+  align-items: center; /* Keep items vertically centered in the row */
+  gap: 50px; /* Adjust gap for side-by-side, can be larger */
+  padding-bottom: 60px; /* Reset or adjust padding */
+}
+
+.featureSection:first-of-type .featureText {
+  flex-basis: 45%; /* Give text a bit less than half */
+  width: auto; /* Reset width */
+  max-width: none; /* Reset max-width, flex-basis will control it */
+  text-align: left; /* CHANGED: Align text to the left */
+  padding-right: 20px; /* Add some padding if text is on left */
+  order: 1; /* Ensure text is on the left */
+}
+
+.featureSection:first-of-type .featureImage {
+  flex-basis: 55%; /* Give video a bit more than half */
+  width: auto;      /* Reset width */
+  max-width: none; /* Reset max-width */
+  order: 2; /* Ensure video is on the right */
+}
+
+.featureSection:first-of-type .featureVideo {
+  height: auto;     
+  max-height: 550px; /* Adjusted max-height */
+  /* object-fit: contain; remains from previous change */
+}
+
+/* Ensure the generic .featureSection:nth-child(even) doesn't override the first one if it happens to be even. */
+.featureSection:nth-child(even):not(:first-of-type) {
+  flex-direction: row-reverse;
+}
+
+.featureText {
+  flex: 1;
+  padding-right: 20px;
+}
+
+.featureTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.featureDescription {
+  font-size: 1.1rem;
+  color: #b0b0b0;
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+.featureImage {
+  flex: 1;
+  min-width: 300px;
+  /* Added to make the container flexible and allow image to dictate height */
+  display: flex;
+  align-items: stretch; /* Stretch items to fill container height */
+  justify-content: center; /* Center image if it's narrower than container */
+}
+
+.featureImagePlaceholder {
+  width: 100%;
+  height: 300px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 1.2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* ADDED: Styling for the video in the feature section */
+.featureVideo {
+  width: 100%;
+  height: 300px;
+  object-fit: contain;
+  border-radius: 8px;
+  background-color: #000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  max-width: 100%;
+}
+
+/* ADDED: Styling for the image tag in the feature section, similar to featureVideo */
+.featureImageTag {
+  width: 100%;
+  /* height: 300px; REMOVED - Let image determine height */
+  height: auto; /* ADDED - Let image determine height while maintaining aspect ratio */
+  max-height: 100%; /* ADDED - Ensure image doesn't overflow its flex container */
+  object-fit: contain; /* CHANGED to contain to show the whole image */
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: block;
+}
+
+/* Tools Showcase Section */
+.toolsShowcaseContainer {
+  padding: 20px 0 40px;
+  margin: 70px 0;
+}
+
+.titleContainer {
+  width: 92%;
+  max-width: 1400px;
+  margin: 0 auto 40px;
+  padding: 0 4%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.subtitleWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.mainTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.mainSubtitle {
+  font-size: 1.1rem;
+  color: #b0b0b0;
+  line-height: 1.6;
+  max-width: 800px;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.toolCardsRowContainer {
+  width: 100%;
+  overflow-x: auto;
+  position: relative;
+  cursor: grab;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.toolCardsRowContainer::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.toolCardsRow {
+  display: flex;
+  gap: 15px;
+  padding: 40px 0;
+  will-change: transform;
+  animation: scrollHorizontal 60s linear infinite;
+  user-select: none;
+}
+
+.toolCardsRow:hover {
+  animation-play-state: paused;
+}
+
+/* ADDED: Wrapper for individual tool card and its external title */
+.toolCardWrapper {
+  position: relative; 
+  padding-top: 30px; 
+  flex: 0 0 auto; 
+  width: 475px;     /* INCREASED from 380px */
+  margin-bottom: 10px; 
+}
+
+/* Styles for the actual card content (video/image) */
+.toolCard {
+  background-color: #1f1f1f;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  cursor: pointer;
+  height: 250px; /* INCREASED from 200px */
+}
+
+.toolCard:hover {
+  transform: scale(1.03); /* This will now scale the inner card */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+.toolCardImage {
+  width: 100%;
+  height: 100%; /* Fill the new fixed height of .toolCard */
+  object-fit: cover;
+  display: block;
+}
+
+.toolCardVideo {
+  width: 100%;
+  height: 100%; /* Fill the new fixed height of .toolCard */
+  object-fit: cover; 
+  display: block;
+  background-color: #000; 
+}
+
+/* REMOVED: .toolCardContent as it's no longer used */
+
+/* REMOVED: .toolCardTitle (original for bottom center) */
+
+/* REMOVED: .videoOverlayTitle styles */
+
+/* ADDED: Styles for the external title above the card */
+.externalCardTitle {
+  position: absolute;
+  top: 0; /* Position in the padding-top area of the wrapper */
+  left: 10px;
+  color: #e5e5e5;
+  font-size: 0.9rem; 
+  font-weight: 500;
+  padding: 4px 8px;
+  background-color: rgba(31, 31, 31, 0.8); /* Slightly transparent card background */
+  border-radius: 3px 3px 0 0; /* Rounded top corners */
+  margin: 0;
+  z-index: 2; /* Above the card shadow, but allow card hover effect */
+  line-height: 1.3;
+  white-space: nowrap; /* Prevent title from wrapping if too long for this style */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 20px); /* Prevent overflow from card wrapper */
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .featureSection {
+    padding: 60px 4%;
+  }
+  .featureTitle {
+    font-size: 2.2rem;
+  }
+  .toolCardWrapper { /* UPDATED to target wrapper */
+    width: 350px; /* ADJUSTED from 250px for old .toolCard */
+  }
+  .toolCard { /* ADDED height for this breakpoint */
+    height: 220px;
+  }
+  .toolCardsRow {
+    width: calc(350px * 24 + 15px * 23); /* UPDATED to reflect new card width */
+  }
+}
+
+@media (max-width: 992px) {
+  .featureSection,
+  .featureSection:first-of-type,
+  .featureSection:nth-child(even):not(:first-of-type) {
+    flex-direction: column;
+    text-align: center;
+    padding: 40px 4%;
+    gap: 30px;
+  }
+
+  .featureText,
+  .featureSection:first-of-type .featureText {
+    padding-right: 0;
+    text-align: left;
+    flex-basis: auto;
+    order: 1;
+    width: 100%;
+  }
+
+  .featureImage,
+  .featureSection:first-of-type .featureImage {
+    flex-basis: auto;
+    order: 2;
+    width: 100%;
+  }
+
+  .featureVideo,
+  .featureSection:first-of-type .featureVideo {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+  }
+
+  .featureImageTag {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+  }
+
+  .toolCardWrapper {
+    width: 300px;
+  }
+  .toolCard {
+    height: 200px;
+  }
+  .toolCardsRow {
+    width: calc(300px * 24 + 15px * 23);
+  }
+}
+
+@media (max-width: 768px) {
+  .featureSection {
+    flex-direction: column;
+    padding: 40px 4%;
+  }
+
+  /* Override the first feature section rule for mobile */
+  .featureSection:first-of-type {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .featureText {
+    order: 1;
+    text-align: left;
+    padding-right: 0;
+    max-width: 100%;
+  }
+  
+  .featureImage {
+    order: 2;
+    max-width: 100%;
+  }
+
+  .featureTitle {
+    font-size: 2rem;
+  }
+  .featureDescription {
+    font-size: 1rem;
+  }
+  .mainTitle {
+    font-size: 1.8rem;
+  }
+  .mainSubtitle {
+    font-size: 0.95rem;
+  }
+  .toolCardWrapper {
+    width: 250px;
+  }
+  .toolCard {
+    height: 160px;
+  }
+  .toolCardImage {
+    height: 100%;
+  }
+  .toolCardsRow {
+    width: calc(250px * 24 + 10px * 23);
+    gap: 10px;
+    animation-duration: 50s;
+  }
+}
+
+@media (max-width: 480px) {
+  .featureTitle {
+    font-size: 1.8rem;
+  }
+  .toolCardWrapper {
+    width: 210px;
+  }
+  .toolCard {
+    height: 125px;
+  }
+  .toolCardImage {
+    height: 100%;
+  }
+  .toolCardsRow {
+    width: calc(210px * 24 + 10px * 23);
+    animation-duration: 40s;
+  }
+}

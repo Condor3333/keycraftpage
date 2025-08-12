@@ -1,0 +1,40 @@
+.container {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.resendButton {
+  background-color: #5a67d8; /* Indigo */
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.resendButton:hover {
+  background-color: #434190;
+}
+
+.resendButton:disabled {
+  background-color: #a0aec0; /* Cool Gray */
+  cursor: not-allowed;
+}
+
+.successMessage {
+  margin-top: 10px;
+  color: #38a169; /* Green */
+  font-size: 14px;
+}
+
+.errorMessage {
+  margin-top: 10px;
+  color: #e53e3e; /* Red */
+  font-size: 14px;
+} 

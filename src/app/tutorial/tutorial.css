@@ -1,0 +1,87 @@
+body {
+  color: #e0e0e0;
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.tutorial-container {
+  display: flex;
+  padding: 100px; /* Matches the padding in the original image more closely */
+  max-width: 1200px; /* Limiting max-width as per typical blog layouts */
+  margin: auto; /* Centering the container */
+  
+}
+
+.sidebar {
+  width: 25%; /* Approximate width from the image */
+  padding-right: 30px; /* Spacing between sidebar and content */
+  border-right: 1px solid #333; /* A subtle separator */
+}
+
+.sidebar h2 {
+  font-size: 1em; /* Smaller, as in the image */
+  color: #a0a0a0; /* Greyish color for the BLOG POSTS title */
+  margin-bottom: 20px;
+  font-weight: normal;
+}
+
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar nav ul li a {
+  display: block;
+  color: #c0c0c0; /* Lighter grey for inactive links */
+  text-decoration: none;
+  padding: 10px 0; /* Vertical padding */
+  font-size: 0.9em;
+}
+
+.sidebar nav ul li a.active,
+.sidebar nav ul li a:hover {
+  color: #4a90e2; /* Blue color for active and hover states */
+}
+
+.tutorial-content {
+  width: 55%;
+  padding-left: 30px; /* Spacing between sidebar and content */
+}
+
+.tutorial-content h1 {
+    font-size: 2.5em;
+  color: #fff;
+  margin-top: 0;
+  margin-bottom: 15px;
+  line-height: 1.2;
+  text-align: left;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+  width: 100%;
+  word-wrap: break-word;
+  
+}
+
+.tutorial-content .meta {
+  font-size: 0.9em;
+  color: #a0a0a0; /* Greyish color for metadata */
+  margin-bottom: 30px;
+}
+
+.tutorial-content p {
+  line-height: 1.6;
+  font-size: 1em;
+  margin-bottom: 20px;
+}
+
+.tutorial-content section h2 {
+  font-size: 1.8em; /* Slightly smaller than main title */
+  color: #ffffff;
+  margin-top: 40px; /* Space above section titles */
+  margin-bottom: 15px;
+  font-weight: 520;
+}
+
+
