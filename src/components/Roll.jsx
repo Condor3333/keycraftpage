@@ -138,8 +138,12 @@ const Roll = ({
       
       // Update keyboard height based on device and orientation
       if (isMobileDevice && window.innerHeight > window.innerWidth) {
-        // Mobile portrait - simple zoom-based keyboard height
-        setKeyboardHeight(zoomLevel < 2 ? 150 : 100);
+        // Mobile portrait - adjust keyboard height based on zoom level
+        if (zoomLevel < 2) {
+          setKeyboardHeight(150);
+        } else {
+          setKeyboardHeight(100);
+        }
       } else {
         // Desktop or mobile landscape - use larger keyboard
         setKeyboardHeight(100);
@@ -3775,6 +3779,7 @@ const Roll = ({
         canvasHeight={rollDimensions.height} // ADDED: Pass the measured height
         isPianoFullscreen={isPianoFullscreen} // Pass isPianoFullscreen to Grid
         zoomLevel={zoomLevel} // ADDED: Pass zoom level to Grid
+        keyboardHeight={keyboardHeight} // ADDED: Pass dynamic keyboard height to Grid
       />
       )}
 

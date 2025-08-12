@@ -24,7 +24,8 @@ const Grid = ({
   canvasWidth, 
   canvasHeight, // NEW: height of the roll container (passed from Roll)
   isPianoFullscreen, // ADDED: Receive isPianoFullscreen prop
-  zoomLevel = 1 // ADDED: Receive zoom level prop
+  zoomLevel = 1, // ADDED: Receive zoom level prop
+  keyboardHeight = 100 // ADDED: Receive dynamic keyboard height from Roll
 }) => {
   // REMOVED: Internal containerWidth state and its useEffect
   // const [containerWidth, setContainerWidth] = useState(0);
@@ -43,11 +44,8 @@ const Grid = ({
   // ADDED: console.log for debugging
   // console.log('Grid.jsx: Received isPianoFullscreen:', isPianoFullscreen);
 
-  // Constants shared with Roll.jsx for vertical positioning
-  const KEYBOARD_HEIGHT = 100; // Must match KEYBOARD_HEIGHT in Roll.jsx
-
   // Derive the drawable (note) area height so grid lines can align with notes
-  const drawableHeight = (canvasHeight || 0) - KEYBOARD_HEIGHT;
+  const drawableHeight = (canvasHeight || 0) - keyboardHeight;
 
   // Fixed reference BPM used for grid calculations
   const isBlackKey = (midiNote) => {
@@ -153,7 +151,7 @@ const Grid = ({
       subdivisionsPerBeat,
       beatDuration
     };
-  }, [timeSignature, songDuration, cellSize, noteRange, selectedDuration, PIXELS_PER_SECOND, heightFactor]); // Added heightFactor and cellSize
+  }, [timeSignature, songDuration, cellSize, noteRange, selectedDuration, PIXELS_PER_SECOND, heightFactor, keyboardHeight]); // Added heightFactor, cellSize, and keyboardHeight
 
   // Improved scale highlight calculation
   const scaleHighlights = useMemo(() => {
