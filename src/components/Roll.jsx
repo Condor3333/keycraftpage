@@ -138,8 +138,8 @@ const Roll = ({
       
       // Update keyboard height based on device and orientation
       if (isMobileDevice && window.innerHeight > window.innerWidth) {
-        // Mobile portrait - match CSS keyboard height exactly
-        setKeyboardHeight(150);
+        // Mobile portrait - simple zoom-based keyboard height
+        setKeyboardHeight(zoomLevel < 2 ? 150 : 100);
       } else {
         // Desktop or mobile landscape - use larger keyboard
         setKeyboardHeight(100);
@@ -1104,7 +1104,7 @@ const Roll = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [midiData, isPlaying, isLooping, playbackSpeed, getXPosition, noteRange, heightFactor, KEYBOARD_HEIGHT, PIXELS_PER_SECOND, NOTE_SPACING, isBlackKey, visibleNotes.length]); // MODIFIED: Removed activeNotes, leftHandNotes. Added getXPosition, noteRange, heightFactor, KEYBOARD_HEIGHT, PIXELS_PER_SECOND, NOTE_SPACING, isBlackKey, visibleNotes.length as they are used in the effect or its calculations.
+  }, [midiData, isPlaying, isLooping, playbackSpeed, getXPosition, noteRange, heightFactor, KEYBOARD_HEIGHT, PIXELS_PER_SECOND, NOTE_SPACING, isBlackKey, visibleNotes.length, activeNotes, leftHandNotes]); // FIXED: Added activeNotes and leftHandNotes back to dependency array since they are used in the effect for comparison
 
   const handleNoteMove = (updatedNote) => {
     if (!midiData) return;
