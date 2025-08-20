@@ -195,11 +195,57 @@ export default function FeaturesAndToolsSection() {
       
       <section className={styles.featureSection} ref={mainFeatureVideoRef1}>
         <div className={styles.featureText}>
-          <h2 className={styles.featureTitle}>Toolbar</h2>
+          <h2 className={styles.featureTitle}>Comprehensive Editor</h2>
           <p className={styles.featureDescription}>
-            Compose piano pieces without sheet music.<br></br> Add chords, scales, arpeggios and runs with the toolbar.
-          
+            Compose piano pieces without sheet music.<br />
+            Your own workstation for piano.
           </p>
+          
+          <div className={styles.toolsList}>
+            <div className={styles.toolCategory}>
+              <h4>TOOLS</h4>
+              <ul>
+                <li>Add Note</li>
+                <li>Add Run</li>
+                <li>Add Chord</li>
+                <li>Add Space</li>
+                <li>Add Text</li>
+                <li>Hand Color</li>
+                <li>Wallpapers</li>
+              </ul>
+            </div>
+            
+            <div className={styles.toolCategory}>
+              <h4>CONTROLS</h4>
+              <ul>
+                <li>Snap to Grid</li>
+                <li>Grid</li>
+                <li>Scale Highlights</li>
+                <li>Fullscreen</li>
+                <li>Note Names</li>
+                <li>Zoom</li>
+              </ul>
+            </div>
+            
+            <div className={styles.toolCategory}>
+              <h4>STYLE</h4>
+              <ul>
+                <li>Glow</li>
+                <li>Roundness</li>
+                <li>Bevel</li>
+                <li>And More</li>
+              </ul>
+            </div>
+            
+            <div className={styles.toolCategory}>
+              <h4>THEORY</h4>
+              <ul>
+                <li>Time Signature</li>
+                <li>Transpose</li>
+                <li>Tempo</li>
+              </ul>
+            </div>
+          </div>
         </div>
         <div className={styles.featureImage}>
           <video 
@@ -227,12 +273,164 @@ export default function FeaturesAndToolsSection() {
           />
         </div>
         <div className={styles.featureText}>
-          <h2 className={styles.featureTitle}>Intelligent Note Detection</h2>
+          <h2 className={styles.featureTitle}>Learn Music Theory</h2>
           <p className={styles.featureDescription}>
-            Learn how to read piano rolls with the intelligent note detection system. 
+            Learn how to read piano rolls with intelligent note detection. 
             Understand musical patterns and structures, making music theory easier to learn.
-        
           </p>
+          
+          <div className={styles.featureList}>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Chord Detection</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Scale Highlights</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Note Names</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.featureSection}>
+        <div className={styles.featureImage}>
+          <div className={styles.featureImagePlaceholder}>
+            AI Transcription Demo
+          </div>
+        </div>
+        <div className={styles.featureText}>
+          <h2 className={styles.featureTitle}>AI Transcription</h2>
+          <p className={styles.featureDescription}>
+            Convert your audio and video recordings into piano rolls instantly. 
+            Our advanced AI technology analyzes your music and creates accurate MIDI files 
+            that you can edit and refine in the piano roll editor.
+          </p>
+          
+          <div className={styles.featureList}>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Audio/Video to MIDI</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Accurate Note Detection</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Download and Edit MIDI</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.featureSection}>
+        <div className={styles.featureImage}>
+          <div className={styles.featureImagePlaceholder}>
+            Choose Audio
+          </div>
+        </div>
+        <div className={styles.featureText}>
+          <h2 className={styles.featureTitle}>Choose Audio</h2>
+          <p className={styles.featureDescription}>
+            Pick from a growing set of instrument sounds for playback and export.
+          </p>
+          <div className={`${styles.featureList} ${styles.audioList}`}>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Piano</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Organ</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Synth</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Synth 2</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Guitar (Acoustic)</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Clean Electric Guitar</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Harp</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Harpsichord</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Electric Piano</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Vibraphone</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Choir</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Violin</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Cello</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Trumpet</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Fart Kit (fun)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.featureSection}>
+        <div className={styles.featureImage}>
+          <div className={styles.featureImagePlaceholder}>
+            Customize Visuals Demo
+          </div>
+        </div>
+        <div className={styles.featureText}>
+          <h2 className={styles.featureTitle}>Customize Visuals</h2>
+          <p className={styles.featureDescription}>
+            Personalize your piano roll with custom colors, backgrounds, and visual effects. 
+            Create your perfect 
+            visual environment for composing music.
+          </p>
+          
+          <div className={styles.featureList}>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Custom Colors</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Background Themes</span>
+            </div>
+            <div className={styles.featureItem}>
+              <span className={styles.checkmark}>✓</span>
+              <span>Note Effects</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -245,12 +443,36 @@ export default function FeaturesAndToolsSection() {
           />
         </div>
         <div className={styles.featureText}>
-          <h2 className={styles.featureTitle}>Cloud Storage</h2>
+          <h2 className={styles.featureTitle}>Access on All Devices</h2>
           <p className={styles.featureDescription}>
-            Your whole repertoire in one place.<br></br>
-            Access your collection of piano rolls on all devices.
-            
+            Your whole repertoire in one place. Access your piano rolls seamlessly across all your devices with cloud synchronization.
           </p>
+          
+          <div className={styles.deviceList}>
+            <div className={styles.deviceItem}>
+              <span className={styles.checkmark}>✓</span>
+              <div className={styles.deviceInfo}>
+                <strong>Desktop</strong>
+                <span>Full-featured editor with keyboard shortcuts</span>
+              </div>
+            </div>
+            
+            <div className={styles.deviceItem}>
+              <span className={styles.checkmark}>✓</span>
+              <div className={styles.deviceInfo}>
+                <strong>Tablet</strong>
+                <span>Touch-optimized interface with stylus support</span>
+              </div>
+            </div>
+            
+            <div className={styles.deviceItem}>
+              <span className={styles.checkmark}>✓</span>
+              <div className={styles.deviceInfo}>
+                <strong>Phone</strong>
+                <span>Mobile optimized view for learning at the piano</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

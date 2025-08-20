@@ -12,6 +12,7 @@ import type { UserStatus } from './src/models/User';
 import { z } from 'zod';
 
 const isProd = process.env.NODE_ENV === 'production';
+const cookieDomain = process.env.AUTH_COOKIE_DOMAIN || '.keycraft.org';
 
 // Zod Schema for Credentials
 const CredentialsSchema = z.object({
@@ -55,8 +56,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         httpOnly: true,
         sameSite: isProd ? 'none' : 'lax',
         path: '/',
-        secure: isProd,
-        domain: isProd ? '.keycraft.org' : undefined,
+        secure: isProd, // false in dev over http
+        domain: cookieDomain,
       },
     },
     callbackUrl: {
@@ -65,7 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         sameSite: isProd ? 'none' : 'lax',
         path: '/',
         secure: isProd,
-        domain: isProd ? '.keycraft.org' : undefined,
+        domain: cookieDomain,
       },
     },
     csrfToken: {
@@ -75,7 +76,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         sameSite: isProd ? 'none' : 'lax',
         path: '/',
         secure: isProd,
-        domain: isProd ? '.keycraft.org' : undefined,
+        domain: cookieDomain,
       },
     },
   },

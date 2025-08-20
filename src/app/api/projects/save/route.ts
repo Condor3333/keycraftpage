@@ -173,11 +173,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized - No session' }, { status: 401 });
     }
 
-    if (session.user.hasPaid !== true) {
-      console.warn(`[Server Save] User ${session.user.id} attempt to save project denied: Not paid. hasPaid: ${session.user.hasPaid}`);
-      return NextResponse.json({ message: 'Access Denied: An active membership is required to save projects.' }, { status: 403 });
-    }
-
     const userId = session.user.id;
     const body = await req.json();
 
@@ -213,8 +208,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Missing required project metadata fields' }, { status: 400 });
     }
 
-    // Get existing item in parallel with other operations
-    const getExistingItemPromise = dynamoDb.get({
+    // Check if this is a new project (no existing item)
+    const existingItem = await dynamoDb.get({
       TableName: DYNAMODB_PROJECTS_TABLE,
       Key: { userId, projectId },
     }).promise().then(result => result.Item as ProjectDynamoDBItem | undefined)
@@ -222,6 +217,40 @@ export async function POST(req: NextRequest) {
         console.warn("[Server Save] Could not fetch existing project item:", e);
         return undefined;
       });
+
+    // If this is a new project and user hasn't paid, check if they already have projects
+    if (!existingItem) {
+      // MODIFIED: Implement tier-based project limits
+      const getProjectLimit = () => {
+        if (session.user.hasPaid !== true) return 1; // Free tier: 1 project
+        if (session.user.activePlans?.includes('tier1')) return 20; // Tier 1: 20 projects
+        if (session.user.activePlans?.includes('tier2')) return Infinity; // Tier 2: unlimited
+        return 1; // Default to free tier if no plans found
+      };
+
+      const projectLimit = getProjectLimit();
+      
+      // Check how many projects the user already has
+      const userProjects = await dynamoDb.query({
+        TableName: DYNAMODB_PROJECTS_TABLE,
+        KeyConditionExpression: 'userId = :uid',
+        ExpressionAttributeValues: { ':uid': userId },
+      }).promise();
+
+      if (userProjects.Items && userProjects.Items.length >= projectLimit) {
+        let message = '';
+        if (projectLimit === 1) {
+          message = 'Access Denied: Free users can only have one project. Please upgrade your account for more projects.';
+        } else if (projectLimit === 20) {
+          message = 'Access Denied: Tier 1 users can only have 20 projects. Please upgrade to Tier 2 for unlimited projects.';
+        } else {
+          message = 'Access Denied: You have reached your project limit. Please upgrade your account for more projects.';
+        }
+        
+        console.warn(`[Server Save] User ${session.user.id} attempt to create project denied: Project limit reached. hasPaid: ${session.user.hasPaid}, activePlans: ${session.user.activePlans}, existing projects: ${userProjects.Items.length}, limit: ${projectLimit}`);
+        return NextResponse.json({ message }, { status: 403 });
+      }
+    }
 
     // Start all S3 operations in parallel
     const s3Operations: Promise<any>[] = [];
@@ -315,10 +344,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Wait for all operations to complete
-    const [existingItem] = await Promise.all([
-      getExistingItemPromise,
-      ...s3Operations
-    ]);
+    await Promise.all(s3Operations);
 
     // Clean up old S3 objects if needed
     const cleanupOperations: Promise<void>[] = [];

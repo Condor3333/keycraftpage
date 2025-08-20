@@ -10,9 +10,8 @@ import { getPublicAssetUrl } from '../../config/cdn';
 export default function Header() {
   const { data: session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
-  // In development, use the IP address
-  const isDev = process.env.NODE_ENV === 'development';
-  const appUrl = isDev ? 'http://192.168.2.19:3001' : (process.env.NEXT_PUBLIC_APP_URL || 'http://app.keycraft.org:3001');
+  // Use configured app URL or default to app subdomain
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://app.keycraft.org:3001';
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);

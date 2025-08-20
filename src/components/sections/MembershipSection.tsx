@@ -137,7 +137,7 @@ export default function MembershipSection() { // Renamed component
           {/* Tier 1 Card */}
           <div className={styles['alt-plan-card']}>
             {session?.user?.hasPaid && (userPlans.tier1 || userPlans.tier2) && 
-              <div style={{position: 'absolute', top: '10px', right: '10px', backgroundColor: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '4px', fontSize: '12px'}}>
+              <div style={{position: 'absolute', top: '10px', left: '10px', backgroundColor: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '4px', fontSize: '12px'}}>
                 PURCHASED
               </div>
             }
@@ -150,7 +150,7 @@ export default function MembershipSection() { // Renamed component
             <p className={styles['alt-plan-description']}>All Features</p>
             <ul className={styles['alt-features-list-in-card']}>
               <li>Full Access to Piano Roll Editor</li>
-              <li>Limited Projects (20)</li>
+              <li>Multiple Projects (20)</li>
               <li>Limited AI Transcriptions (5/month)</li>
             </ul>
             {session?.user?.hasPaid && (userPlans.tier1 || userPlans.tier2) ? (
@@ -166,7 +166,7 @@ export default function MembershipSection() { // Renamed component
           {/* Tier 2 Card (Launch Deal) */}
           <div className={`${styles['alt-plan-card']} ${styles['alt-popular-card']}`}>
             {session?.user?.hasPaid && userPlans.tier2 && 
-              <div style={{position: 'absolute', top: '10px', right: '10px', backgroundColor: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '4px', fontSize: '12px'}}>
+              <div style={{position: 'absolute', top: '10px', left: '10px', backgroundColor: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '4px', fontSize: '12px'}}>
                 PURCHASED
               </div>
             }

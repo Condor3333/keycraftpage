@@ -92,6 +92,78 @@
   margin-bottom: 25px;
 }
 
+.featureList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Audio list specific styling for multiple columns */
+.featureList.audioList {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 24px;
+  margin-top: 20px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  color: #ffffff;
+}
+
+.checkmark {
+  color: #6495ED;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* Tools List Styles */
+.toolsList {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+  flex-wrap: nowrap; /* Force single row */
+}
+
+.toolCategory {
+  flex: 1;
+  min-width: 0; /* Allow shrinking */
+}
+
+.toolCategory h4 {
+  color: #6495ED; /* Changed to blue */
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.toolCategory ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toolCategory li {
+  color: #e0e0e0;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+  padding-left: 0;
+  position: relative;
+}
+
+.toolCategory li:before {
+  content: "✓";
+  color: #6495ED; /* Changed to blue */
+  font-weight: bold;
+  margin-right: 8px;
+}
+
 .featureImage {
   flex: 1;
   min-width: 300px;
@@ -270,6 +342,42 @@
   max-width: calc(100% - 20px); /* Prevent overflow from card wrapper */
 }
 
+/* Device List Styles */
+.deviceList {
+  margin-top: 20px;
+}
+
+.deviceItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.checkmark {
+  color: #6495ED;
+  font-size: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.deviceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deviceInfo strong {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.deviceInfo span {
+  color: #b0b0b0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .featureSection {
@@ -326,6 +434,24 @@
     width: 100%;
     height: auto;
     max-height: 400px;
+  }
+
+  /* Tools List Mobile Styles */
+  .toolsList {
+    flex-wrap: wrap; /* Allow wrapping on mobile */
+    gap: 15px;
+  }
+
+  .toolCategory {
+    min-width: 150px; /* Smaller minimum width for mobile */
+  }
+
+  .toolCategory h4 {
+    font-size: 0.8rem;
+  }
+
+  .toolCategory li {
+    font-size: 0.8rem;
   }
 
   .toolCardWrapper {

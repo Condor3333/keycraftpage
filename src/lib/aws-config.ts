@@ -18,9 +18,6 @@ if (!process.env.DYNAMODB_PROJECTS_TABLE) {
 if (!process.env.DYNAMODB_USERS_TABLE) {
   throw new Error('Invalid/Missing environment variable: "DYNAMODB_USERS_TABLE"');
 }
-if (!process.env.DYNAMODB_BETA_CODES_TABLE) {
-  throw new Error('Invalid/Missing environment variable: "DYNAMODB_BETA_CODES_TABLE"');
-}
 
 // Configure AWS SDK
 AWS.config.update({
@@ -40,4 +37,3 @@ export const S3_BACKGROUND_IMAGES_BUCKET = process.env.S3_BACKGROUND_IMAGES_BUCK
 export const S3_THUMBNAILS_BUCKET = process.env.S3_THUMBNAILS_BUCKET!;
 export const DYNAMODB_PROJECTS_TABLE = process.env.DYNAMODB_PROJECTS_TABLE!;
 export const DYNAMODB_USERS_TABLE = process.env.DYNAMODB_USERS_TABLE!;
-export const DYNAMODB_BETA_CODES_TABLE = process.env.DYNAMODB_BETA_CODES_TABLE!;

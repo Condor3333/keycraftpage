@@ -87,7 +87,7 @@ if (redisUrl && redisToken) {
 
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? ['https://www.keycraft.org', 'https://app.keycraft.org']
-  : ['http://keycraft.org:3000', 'http://app.keycraft.org:3001', 'http://192.168.2.19:3001'];
+  : ['http://keycraft.org:3000', 'http://app.keycraft.org:3001'];
 
 // Helper function to add CORS headers to any response
 const addCorsHeaders = (response: NextResponse, origin: string | null) => {
@@ -176,6 +176,10 @@ export async function middleware(req: NextRequest) {
   if (req.method === 'POST') {
     if (pathname.startsWith('/api/projects/save')) {
       const response = await applyRateLimiter(saveRateLimiter, 'project save');
+      if (response) return response;
+    }
+    if (pathname.startsWith('/api/notation/convert')) {
+      const response = await applyRateLimiter(saveRateLimiter, 'notation convert');
       if (response) return response;
     }
     if (pathname.startsWith('/api/send-contact-email')) {

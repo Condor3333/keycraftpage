@@ -40,6 +40,27 @@
   line-height: 1.7;
 }
 
+.featureList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  color: #ffffff;
+}
+
+.checkmark {
+  color: #6495ED;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
 .ctaButtons {
   display: flex;
   gap: 16px;
@@ -129,6 +150,12 @@
     max-width: 90%;
     font-size: 18px;
   }
+  .featureList {
+    gap: 10px;
+  }
+  .featureItem {
+    font-size: 15px;
+  }
   .videoFrame {
     width: 90%;
     max-width: 600px; /* Limit video width on smaller screens */
@@ -153,6 +180,15 @@
 
   .subHeadline {
     font-size: 16px;
+  }
+
+  .featureList {
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .featureItem {
+    font-size: 14px;
   }
 
   .ctaButtons {

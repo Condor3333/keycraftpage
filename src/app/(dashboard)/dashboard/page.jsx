@@ -3,7 +3,6 @@
 import { useSession, signIn, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import './dashboard.css'; // Import the CSS file
-import BetaCodeEntry from './BetaCodeEntry.tsx'; // Import the new component
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -36,15 +35,9 @@ export default function DashboardPage() {
   }
   
   // From here, we know the user is authenticated.
-  // Check for paid access.
+  // All authenticated users now have access to the dashboard.
   const user = session.user;
-  const hasAccess = user && user.hasPaid;
-
-  if (!hasAccess) {
-    // If the user is authenticated but doesn't have access, show the BetaCodeEntry component.
-    return <BetaCodeEntry />;
-  }
-
+  
   // Now that access is confirmed, we can safely destructure user properties
   const userName = user.name || 'User';
   const userEmail = user.email || 'N/A';

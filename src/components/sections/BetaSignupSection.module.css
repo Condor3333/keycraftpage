@@ -23,122 +23,21 @@
     color: var(--text-color-secondary);
 }
 
-.form {
+.ctaButtons {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    gap: 20px;
     justify-content: center;
     align-items: center;
-}
-
-.input {
-    padding: 12px 18px;
-    font-size: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    width: 100%;
-    max-width: 400px;
-    background-color: var(--background-color);
-    color: var(--text-color-primary);
-    transition: border-color 0.2s;
-}
-
-.input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(21, 128, 250, 0.2); /* Using a primary color variable */
-}
-
-.message {
-    margin-top: 20px;
-    font-weight: 500;
-    padding: 10px;
-    border-radius: 8px;
-    width: 100%;
-    max-width: 400px;
-}
-
-.message.success {
-    color: #155724;
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-}
-
-.message.error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-}
-
-/* Re-using global button styles, so no specific button styles needed here unless for override */
-
-.stepsList {
-    text-align: left;
-    max-width: 450px;
-    margin: 30px auto;
-    padding: 0;
-    counter-reset: step-counter;
-}
-
-.stepsList li {
-    list-style: none;
-    position: relative;
-    padding: 20px 0 20px 60px;
-    margin-bottom: 15px;
-    background: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    counter-increment: step-counter;
-    font-size: 1.1rem;
-    color: var(--text-color-primary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.stepsList li:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    border-color: var(--primary-color);
-}
-
-.stepsList li::before {
-    content: counter(step-counter);
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 32px;
-    height: 32px;
-    background: var(--primary-color);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 1.2rem;
-}
-
-.stepsList li:last-child {
-    margin-bottom: 0;
+    flex-wrap: wrap;
 }
 
 @media (max-width: 768px) {
-    .stepsList {
-        max-width: 100%;
-        margin: 20px 0;
+    .ctaButtons {
+        flex-direction: column;
+        gap: 15px;
     }
     
-    .stepsList li {
-        padding: 15px 0 15px 50px;
-        font-size: 1rem;
-    }
-    
-    .stepsList li::before {
-        width: 28px;
-        height: 28px;
-        left: 15px;
-        font-size: 1rem;
-        font-weight: 800;
+    .container h2 {
+        font-size: 2rem;
     }
 } 

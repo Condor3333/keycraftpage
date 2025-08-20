@@ -72,11 +72,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.hasPaid !== true) {
-      console.warn(`[Server Load] User ${session.user.id} attempt to load projects denied: Not paid. hasPaid: ${session.user.hasPaid}`);
-      return NextResponse.json({ message: 'Access Denied: An active membership is required to load projects.', projects: [] }, { status: 403 });
-    }
-
     const userId = session.user.id;
 
     // Add LastEvaluatedKey handling for pagination

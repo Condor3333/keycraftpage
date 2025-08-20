@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../../auth';
 
+const DEFAULT_APP_ORIGIN = 'http://app.keycraft.org:3001';
+const ALLOWED_ORIGINS = new Set<string>([
+  DEFAULT_APP_ORIGIN,
+  process.env.NEXT_PUBLIC_APP_ORIGIN || DEFAULT_APP_ORIGIN,
+  'http://localhost:3001',
+]);
+
+function withCors(response: NextResponse, origin: string | null) {
+  const allowed = origin && ALLOWED_ORIGINS.has(origin) ? origin : (process.env.NEXT_PUBLIC_APP_ORIGIN || DEFAULT_APP_ORIGIN);
+  response.headers.set('Access-Control-Allow-Origin', allowed);
+  response.headers.set('Vary', 'Origin');
+  response.headers.set('Access-Control-Allow-Credentials', 'true');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  return response;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    
     if (!session || !session.user) {
-      return NextResponse.json({ error: 'No session found' }, { status: 401 });
+      const res = NextResponse.json({ error: 'No session found' }, { status: 401 });
+      return withCors(res, req.headers.get('origin'));
     }
 
-    // Return the session data in a format the app can use
     const sessionData = {
       user: {
         id: session.user.id,
@@ -25,26 +41,16 @@ export async function GET(req: NextRequest) {
       }
     };
 
-    const response = NextResponse.json(sessionData);
-    
-    // Set CORS headers for the IP address
-    response.headers.set('Access-Control-Allow-Origin', 'http://192.168.2.19:3001');
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-
-    return response;
+    const res = NextResponse.json(sessionData);
+    return withCors(res, req.headers.get('origin'));
   } catch (error) {
     console.error('Session bridge error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const res = NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return withCors(res, req.headers.get('origin'));
   }
 }
 
 export async function OPTIONS(req: NextRequest) {
-  const response = new NextResponse(null, { status: 200 });
-  response.headers.set('Access-Control-Allow-Origin', 'http://192.168.2.19:3001');
-  response.headers.set('Access-Control-Allow-Credentials', 'true');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
-  return response;
+  const res = new NextResponse(null, { status: 200 });
+  return withCors(res, req.headers.get('origin'));
 }

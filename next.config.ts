@@ -6,7 +6,7 @@ const nextConfig = {
   experimental: {
     allowedDevOrigins: ['*'],
   },
-  allowedDevOrigins: ['http://keycraft.org:3000', 'http://app.keycraft.org:3001', 'http://192.168.2.19:3001'],
+  allowedDevOrigins: ['http://keycraft.org:3000', 'http://app.keycraft.org:3001'],
   images: {
     remotePatterns: [
       {
@@ -51,7 +51,7 @@ const nextConfig = {
           { key: "Access-Control-Allow-Credentials", value: "true" },
           { key: "Access-Control-Allow-Methods", value: "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
           { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Cookie, Set-Cookie" },
-          { key: "Access-Control-Allow-Origin", value: process.env.NODE_ENV === 'production' ? 'https://app.keycraft.org' : 'http://192.168.2.19:3001' },
+          { key: "Access-Control-Allow-Origin", value: process.env.NODE_ENV === 'production' ? 'https://app.keycraft.org' : 'http://app.keycraft.org:3001' },
           { key: "Access-Control-Expose-Headers", value: "Set-Cookie" },
         ],
       },

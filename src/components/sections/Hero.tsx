@@ -30,6 +30,32 @@ export default function Hero() {
         <p className={styles.subHeadline}>
           KeyCraft is a piano roll editor that makes music composition simple, intuitive, and enjoyable.
         </p>
+        <div className={styles.featureList}>
+        <div className={styles.featureItem}>
+            <span className={styles.checkmark}>✓</span>
+            <span>Full Piano Roll Editor</span>
+          </div>
+          <div className={styles.featureItem}>
+            <span className={styles.checkmark}>✓</span>
+            <span>AI Transcription</span>
+          </div>
+          <div className={styles.featureItem}>
+            <span className={styles.checkmark}>✓</span>
+            <span>Customize Visuals</span>
+          </div>
+          <div className={styles.featureItem}>
+            <span className={styles.checkmark}>✓</span>
+            <span>Customize Audio</span>
+          </div>
+          <div className={styles.featureItem}>
+            <span className={styles.checkmark}>✓</span>
+            <span>Sheet Music *NEW*</span>
+          </div>
+          <div className={styles.featureItem}>
+            <span className={styles.checkmark}>✓</span>
+            <span>Access on All Devices</span>
+          </div>
+        </div>
         <div className={styles.ctaButtons}>
           {isLoading ? (
             <div className={`${styles.button} global-primary-button ${styles.loadingButton}`}>Loading...</div>
@@ -43,7 +69,7 @@ export default function Hero() {
             </Link>
           )}
           <a href="https://discord.gg/aCSC8qqGjz" target="_blank" rel="noopener noreferrer" className={`${styles.button} ${styles.secondaryButton}`}>
-            Join Discord for Early Access
+            Join Discord
           </a>
         </div>
       </div>
