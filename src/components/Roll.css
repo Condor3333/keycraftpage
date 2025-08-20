@@ -1,0 +1,255 @@
+.piano-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  background: #000000;
+  border-radius: 0 0 8px 8px;
+  padding: 0;
+  margin: 0;
+  border-bottom: 1px solid #444; /* Darker border for the piano grid */
+  box-sizing: border-box;
+}
+
+.piano-key {
+  position: absolute;
+  bottom: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.white-key {
+  background: white;
+  border: 1px solid #333;
+  z-index: 1;
+}
+
+.black-key {
+  background: #000000;
+  height: 100%;
+  z-index: 2;
+  transform: translateX(0);
+  border: none;
+}
+
+.white-key.active {
+  background: #4287f5;
+}
+
+.black-key.active {
+  background: #2563eb;
+}
+
+.piano-key.left-hand.active {
+  background-color: #ef4444 !important; /* Red color for left hand */
+}
+
+.piano-key.left-hand.active.black-key {
+  background-color: #dc2626 !important; /* Darker red for black keys */
+}
+
+.piano-key.right-hand.active {
+  background-color: #4287f5 !important; /* Blue color for right hand */
+}
+
+.piano-key.right-hand.active.black-key {
+  background-color: #2563eb !important; /* Darker blue for black keys */
+}
+
+canvas {
+  cursor: default;
+}
+
+canvas:hover {
+  cursor: pointer;
+}
+
+.notes-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 100px;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+/* Remove the width calculation and transition */
+body.toolbar-sidebar .notes-container,
+body.toolbar-sidebar .piano-container {
+  margin-left: 48px;
+}
+
+/* Remove these problematic styles completely */
+/* .toolbar-sidebar .notes-container,
+.toolbar-sidebar .piano-container {
+  margin-left: 48px;
+  width: calc(100% - 48px);
+} */
+
+.note {
+  transform: translateY(0); /* Simplified transformation */
+  will-change: transform; /* GPU optimization for animations */
+}
+
+.note.dragging {
+  opacity: 0.8;
+  pointer-events: none;
+  cursor: grabbing;
+}
+
+.note.selected {
+  outline: 2px solid #fff;
+  z-index: 2;
+}
+
+.toolbar-button.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* Update background image container styles */
+.background-image-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 100px;
+  pointer-events: none;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.3;
+}
+
+/* Remove the img styles since we'll use background-image instead */
+.background-image-container img {
+  display: none;
+}
+
+/* Add a class for thumbnail capture */
+.background-image-container.for-thumbnail {
+  opacity: 1;
+  bottom: 0;
+}
+
+/* Styling for the horizontal guide line during interactions */
+.interaction-guide-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+  z-index: 5; /* Ensure it's above grid lines but below notes/toolbar */
+  pointer-events: none; /* Make sure it doesn't interfere with mouse events */
+}
+
+.note-name {
+  display: inline-block; /* Avoid empty ruleset warning */
+}
+
+/* Recording Mode Styles */
+#piano-roll-container.recording-mode {
+  /* Enhanced visual quality for recording */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+#piano-roll-container.recording-mode .note-component {
+  /* Remove interaction indicators */
+  cursor: default !important;
+  
+  /* Enhanced visual quality for video */
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#piano-roll-container.recording-mode .note-component:hover {
+  /* Disable hover effects during recording */
+  transform: none !important;
+  filter: none !important;
+}
+
+#piano-roll-container.recording-mode .resize-handle {
+  /* Hide resize handles during recording */
+  display: none !important;
+}
+
+
+/* Mobile orientation specific styles */
+@media (orientation: portrait) and (max-width: 768px) and (pointer: coarse) {
+  /* Portrait phone layout - explicit positioning */
+  #piano-roll-container {
+    position: fixed !important;
+    top: 40px !important; /* Just header height */
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: calc(100% - 40px) !important; /* Subtract just header */
+    z-index: 999 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .piano-container {
+    position: fixed !important;
+    bottom: 65px !important; /* Space for playback controls */
+    left: 0 !important;
+    right: 0 !important;
+    height: 80px !important;
+    z-index: 1000 !important;
+  }
+
+  .notes-container {
+    position: fixed !important;
+    top: 40px !important; /* Just header height */
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 145px !important; /* piano + controls */
+    z-index: 999 !important;
+    overflow: hidden !important;
+  }
+  
+  .piano-key {
+    height: 80px !important;
+  }
+}
+
+/* Minimal mode in portrait - keyboard at bottom, roll extends to top */
+@media (orientation: portrait) and (max-width: 768px) and (pointer: coarse) {
+  #piano-roll-container.minimal-mode {
+    position: fixed !important;
+    top: 0 !important; /* Extend to very top */
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 999 !important;
+  }
+
+  /* Target the actual keyboard element even if it doesn't carry the class itself */
+  #piano-roll-container.minimal-mode .piano-container,
+  .piano-container.minimal-mode {
+    position: fixed !important;
+    bottom: 0 !important; /* Keyboard at very bottom */
+    left: 0 !important;
+    right: 0 !important;
+    height: 100px !important;
+    z-index: 1000 !important;
+  }
+
+  #piano-roll-container.minimal-mode .notes-container,
+  .notes-container.minimal-mode {
+    position: fixed !important;
+    top: 0 !important; /* Start from very top */
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 100px !important; /* End at keyboard */
+    z-index: 999 !important;
+    overflow: hidden !important;
+  }
+}

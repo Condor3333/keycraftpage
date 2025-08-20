@@ -1,0 +1,262 @@
+.note {
+  position: absolute;
+  border-radius: 4px;
+  user-select: none;
+  cursor: grab;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  z-index: 1;
+  isolation: isolate; /* Create a new stacking context */
+  mix-blend-mode: normal;
+  backface-visibility: hidden; /* Optimize performance */
+  transform: translateZ(0); /* Force GPU acceleration */
+}
+
+.note.selected {
+  z-index: 2;
+}
+
+.note.dragging {
+  cursor: grabbing;
+  z-index: 1000;
+}
+
+/* Only apply hover effects when not glowing */
+.note:not(.glowing):hover {
+  filter: brightness(1.1);
+}
+
+.note.selected:not(.glowing):hover {
+  filter: brightness(1.2);
+}
+
+/* Glowing note styles */
+.note.glowing {
+  z-index: 100 !important;
+  /* The filter is now applied via inline style from the component to avoid conflicts */
+}
+
+.note-name-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  pointer-events: none;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+.resize-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: ns-resize;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.note:hover .resize-handle {
+  opacity: 1;
+}
+
+/* ADDED: Mobile drag handlers - always visible when shown */
+.resize-handle.mobile-handle {
+  opacity: 1;
+  height: 12px; /* Larger touch target */
+  background-color: rgba(255, 255, 255, 0.4); /* More visible */
+  border: 2px solid rgba(255, 255, 255, 0.6); /* Border for better visibility */
+  cursor: default; /* No cursor on mobile */
+  touch-action: none; /* Prevent scrolling when touching handlers */
+}
+
+.resize-handle.mobile-handle.top {
+  top: -6px; /* Adjusted for larger height */
+}
+
+.resize-handle.mobile-handle.bottom {
+  bottom: -6px; /* Adjusted for larger height */
+}
+
+.resize-handle.top {
+  top: -3px;
+}
+
+.resize-handle.bottom {
+  bottom: -3px;
+}
+
+.note.hand-tool {
+  cursor: pointer;
+}
+
+.note.erase-tool {
+  cursor: not-allowed;
+}
+
+.note.selection-tool {
+  pointer-events: none;
+}
+
+.drag-guide {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255,255,255,0.1);
+  pointer-events: none;
+  z-index: 999;
+}
+
+.note.selected {
+  /* Styles for selected notes - ensure no border/outline */
+  border: none !important; /* Add !important to override any conflicting styles */
+  outline: none !important; /* Add !important to override any conflicting styles */
+  /* You might want to keep or adjust other selection indicators, like a subtle background change */
+  /* For example, if you still want a visual cue without a border: */
+  /* box-shadow: 0 0 8px rgba(100, 150, 255, 0.7); */ 
+}
+
+/* Gradient note styles */
+.note.gradient {
+  background-blend-mode: overlay;
+  position: relative;
+}
+
+.note.gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(0,0,0,0.1) 0%, transparent 40%),
+    linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.05) 50%, transparent 70%);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Metallic effect - now handled by JavaScript */
+.note.metallic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Neon effect */
+.note.neon {
+  box-shadow: 
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 30px currentColor,
+    inset 0 0 10px rgba(255,255,255,0.3) !important;
+  filter: brightness(1.3) contrast(1.2) !important;
+  border: 2px solid currentColor !important;
+}
+
+/* Pulse animation */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.note.pulse {
+  animation: pulse 2s ease-in-out infinite !important;
+}
+
+
+
+/* Holographic effect */
+@keyframes holographic {
+  0% { filter: hue-rotate(0deg) brightness(1.2); }
+  25% { filter: hue-rotate(90deg) brightness(1.3); }
+  50% { filter: hue-rotate(180deg) brightness(1.4); }
+  75% { filter: hue-rotate(270deg) brightness(1.3); }
+  100% { filter: hue-rotate(360deg) brightness(1.2); }
+}
+
+.note.holographic {
+  background: linear-gradient(45deg, 
+    #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080) !important;
+  background-size: 400% 400% !important;
+  animation: holographic 3s ease-in-out infinite !important;
+  box-shadow: 
+    0 0 20px rgba(255,255,255,0.5),
+    inset 0 0 20px rgba(255,255,255,0.2) !important;
+}
+
+.note.holographic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(255,255,255,0.3) 0%, 
+    transparent 25%, 
+    rgba(255,255,255,0.1) 50%, 
+    transparent 75%, 
+    rgba(255,255,255,0.3) 100%);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  animation: holographic 3s ease-in-out infinite reverse;
+}
+
+
+
+/* Ice effect */
+@keyframes ice {
+  0%, 100% { 
+    background: linear-gradient(45deg, #87ceeb, #b0e0e6, #87ceeb, #add8e6);
+    box-shadow: 0 0 15px #87ceeb, inset 0 0 15px rgba(135, 206, 235, 0.4);
+  }
+  50% { 
+    background: linear-gradient(45deg, #b0e0e6, #87ceeb, #add8e6, #87ceeb);
+    box-shadow: 0 0 20px #b0e0e6, inset 0 0 20px rgba(176, 224, 230, 0.5);
+  }
+}
+
+.note.ice {
+  animation: ice 3s ease-in-out infinite !important;
+  border: 2px solid rgba(255, 255, 255, 0.8) !important;
+  position: relative;
+}
+
+.note.ice::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.8) 0%, transparent 30%),
+    radial-gradient(circle at 80% 80%, rgba(255,255,255,0.6) 0%, transparent 30%),
+    linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+
+
+
+
+ 

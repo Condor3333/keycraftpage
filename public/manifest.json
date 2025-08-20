@@ -1,0 +1,31 @@
+{
+  "short_name": "KeyCraft",
+  "name": "KeyCraft Piano Roll Editor",
+  "description": "Professional piano roll MIDI editor for web and mobile",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "theme_color": "#000000",
+  "background_color": "#282828",
+  "categories": ["music", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}
