@@ -151,7 +151,7 @@ const Grid = ({
       subdivisionsPerBeat,
       beatDuration
     };
-  }, [timeSignature, songDuration, cellSize, noteRange, selectedDuration, PIXELS_PER_SECOND, heightFactor, keyboardHeight]); // Added heightFactor, cellSize, and keyboardHeight
+  }, [timeSignature, songDuration, cellSize, noteRange, selectedDuration, PIXELS_PER_SECOND, heightFactor, keyboardHeight]); // Removed bpm from dependencies since grid uses fixed BPM
 
   // Improved scale highlight calculation
   const scaleHighlights = useMemo(() => {

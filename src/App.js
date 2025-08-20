@@ -12,6 +12,7 @@ import Login from './components/Auth/Login';
 import html2canvas from 'html2canvas';
 import { hasStateChanged, getChangeSummary } from './utils/projectStateComparison.js';
 import Note from './components/Note';
+import SheetMusicView from './components/SheetMusicView';
 
 function AppContent() {
   const { currentUser, forceSessionRefresh } = useAuth(); // ADDED: forceSessionRefresh from context
@@ -132,14 +133,49 @@ function AppContent() {
   // ADDED: State for showing note names
   const [showNoteNames, setShowNoteNames] = useState(false);
 
-  // ADDED: State for minimal mode
-  const [isMinimalMode, setIsMinimalMode] = useState(false);
+      // ADDED: State for minimal mode
+    const [isMinimalMode, setIsMinimalMode] = useState(false);
 
-  // ADDED: State for note styling
+    // ADDED: Effect to manage body class for minimal mode
+    useEffect(() => {
+      if (isMinimalMode) {
+        document.body.classList.add('minimal-mode');
+        // Request fullscreen when entering minimal mode
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(err => {
+            console.log('Fullscreen request failed:', err);
+          });
+        }
+        // Turn on piano fullscreen when entering minimal mode
+        setIsPianoFullscreen(true);
+      } else {
+        document.body.classList.remove('minimal-mode');
+        // Exit fullscreen when leaving minimal mode
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(err => {
+            console.log('Exit fullscreen failed:', err);
+          });
+        }
+        // Turn off piano fullscreen when leaving minimal mode
+        setIsPianoFullscreen(false);
+      }
+    }, [isMinimalMode]);
+  
+    // ADDED: State for note styling
   const [noteGlow, setNoteGlow] = useState(0);
   const [noteRoundness, setNoteRoundness] = useState(4);
   const [noteBevel, setNoteBevel] = useState(0);
   const [noteOpacity, setNoteOpacity] = useState(1);
+  const [noteGradient, setNoteGradient] = useState(0);
+  const [noteMetallic, setNoteMetallic] = useState(0);
+  const [noteNeon, setNoteNeon] = useState(0);
+  const [notePulse, setNotePulse] = useState(0);
+
+  const [noteHolographic, setNoteHolographic] = useState(0);
+  const [noteIce, setNoteIce] = useState(0);
+
+  // ADDED: State for audio sound type
+  const [currentSoundType, setCurrentSoundType] = useState('piano');
 
   // States for video recording
   const [isRecordingMode, setIsRecordingMode] = useState(false);
@@ -150,6 +186,10 @@ function AppContent() {
 
   // ADDED: Zoom state
   const [zoomLevel, setZoomLevel] = useState(1); // 1 = 100%, 0.5 = 50%, 2 = 200%, etc.
+  
+  // ADDED: Duration scale state
+  const [durationScale, setDurationScale] = useState(1); // 1 = 100%, 0.5 = 50%, 2 = 200%, etc.
+  const [originalNoteData, setOriginalNoteData] = useState(null); // Store original data for scaling
 
   // ADDED: Note limit constant
   const NOTE_LIMIT = 20000;
@@ -157,9 +197,50 @@ function AppContent() {
   // ADDED: State to track current transposition offset in semitones
   const [transpositionOffset, setTranspositionOffset] = useState(0);
 
+  // Sheet music view state
+  const [showSheetMusic, setShowSheetMusic] = useState(false);
+  const [showSideBySide, setShowSideBySide] = useState(false);
+  const [showJsonView, setShowJsonView] = useState(false);
+  const [isConvertingToXml, setIsConvertingToXml] = useState(false);
+  const [lastMusicXml, setLastMusicXml] = useState(null);
+  const [xmlError, setXmlError] = useState(null);
+
+
   const handleSetNoteGlow = (value) => {
     console.log(`[App.js] Setting noteGlow to: ${value}`);
     setNoteGlow(value);
+  };
+
+  const handleSetNoteGradient = (value) => {
+    console.log(`[App.js] Setting noteGradient to: ${value}`);
+    setNoteGradient(value);
+  };
+
+  const handleSetNoteMetallic = (value) => {
+    console.log(`[App.js] Setting noteMetallic to: ${value}`);
+    setNoteMetallic(value);
+  };
+
+  const handleSetNoteNeon = (value) => {
+    console.log(`[App.js] Setting noteNeon to: ${value}`);
+    setNoteNeon(value);
+  };
+
+  const handleSetNotePulse = (value) => {
+    console.log(`[App.js] Setting notePulse to: ${value}`);
+    setNotePulse(value);
+  };
+
+
+
+  const handleSetNoteHolographic = (value) => {
+    console.log(`[App.js] Setting noteHolographic to: ${value}`);
+    setNoteHolographic(value);
+  };
+
+  const handleSetNoteIce = (value) => {
+    console.log(`[App.js] Setting noteIce to: ${value}`);
+    setNoteIce(value);
   };
 
   const resetNoteStyles = () => {
@@ -167,6 +248,13 @@ function AppContent() {
     setNoteRoundness(4);
     setNoteBevel(0);
     setNoteOpacity(1);
+    setNoteGradient(0);
+    setNoteMetallic(0);
+    setNoteNeon(0);
+    setNotePulse(0);
+
+    setNoteHolographic(0);
+    setNoteIce(0);
   };
 
   // ADDED: Zoom handler functions
@@ -176,6 +264,47 @@ function AppContent() {
 
   const handleZoomReset = () => {
     setZoomLevel(1); // Reset to 100%
+  };
+  
+  // ADDED: Duration scale handler functions - now modifies actual MIDI data
+  const handleDurationScaleChange = (newDurationScale) => {
+    const clampedScale = Math.max(0.2, Math.min(newDurationScale, 2)); // Clamp between 20% and 200%
+    
+    // Use original data if available, otherwise use current data as original
+    const baseData = originalNoteData || noteData;
+    if (!baseData || !baseData.tracks || baseData.tracks.length === 0) return;
+    
+    // Create a deep copy of the original note data with scaling applied
+    const newNoteData = {
+      ...baseData,
+      tracks: baseData.tracks.map(track => ({
+        ...track,
+        notes: track.notes.map(note => ({
+          ...note,
+          time: note.time * clampedScale,
+          duration: note.duration * clampedScale
+        }))
+      }))
+    };
+    
+    // Update the note data
+    setNoteData(newNoteData);
+    setDurationScale(clampedScale);
+    
+    // Store original data if not already stored
+    if (!originalNoteData) {
+      setOriginalNoteData(noteData);
+    }
+    
+    // Mark as dirty since we modified the data
+    setIsDirty(true);
+    setDirtyChanges(prev => [...prev, 'Duration scale applied']);
+  };
+
+  const handleDurationScaleReset = () => {
+    // Reset to 100% - this would require reloading the original data
+    // For now, we'll just set the scale back to 1
+    setDurationScale(1);
   };
 
   // ADDED: Helper function to fetch an image and convert it to a data URL
@@ -291,53 +420,4079 @@ function AppContent() {
   }, [currentUser]);
 
   //==============SYNTH INITIALIZATION====================
-  // Replaces synth initialization with sampler
-  //Creates realistic piano sounds via audio samples
+  // Creates different synth types based on currentSoundType
   useEffect(() => {
-    const piano = new Tone.Sampler({
-      urls: {
-        A0: "A0.mp3",
-        C1: "C1.mp3",
-        "D#1": "Ds1.mp3",
-        "F#1": "Fs1.mp3",
-        A1: "A1.mp3",
-        C2: "C2.mp3",
-        "D#2": "Ds2.mp3",
-        "F#2": "Fs2.mp3",
-        A2: "A2.mp3",
-        C3: "C3.mp3",
-        "D#3": "Ds3.mp3",
-        "F#3": "Fs3.mp3",
-        A3: "A3.mp3",
-        C4: "C4.mp3",
-        "D#4": "Ds4.mp3",
-        "F#4": "Fs4.mp3",
-        A4: "A4.mp3",
-        C5: "C5.mp3",
-        "D#5": "Ds5.mp3",
-        "F#5": "Fs5.mp3",
-        A5: "A5.mp3",
-        C6: "C6.mp3",
-        "D#6": "Ds6.mp3",
-        "F#6": "Fs6.mp3",
-        A6: "A6.mp3",
-        C7: "C7.mp3",
-        "D#7": "Ds7.mp3",
-        "F#7": "Fs7.mp3",
-        A7: "A7.mp3",
-      },
-      release: 0.8,
-      volume: -6,
-      attack: 0.005,
-      curve: "linear",
-      baseUrl: "https://tonejs.github.io/audio/salamander/",
-      onload: () => {
+    let newSynth;
+    
+    switch (currentSoundType) {
+      case 'piano':
+        newSynth = new Tone.Sampler({
+          urls: {
+            A0: "A0.mp3",
+            C1: "C1.mp3",
+            "D#1": "Ds1.mp3",
+            "F#1": "Fs1.mp3",
+            A1: "A1.mp3",
+            C2: "C2.mp3",
+            "D#2": "Ds2.mp3",
+            "F#2": "Fs2.mp3",
+            A2: "A2.mp3",
+            C3: "C3.mp3",
+            "D#3": "Ds3.mp3",
+            "F#3": "Fs3.mp3",
+            A3: "A3.mp3",
+            C4: "C4.mp3",
+            "D#4": "Ds4.mp3",
+            "F#4": "Fs4.mp3",
+            A4: "A4.mp3",
+            C5: "C5.mp3",
+            "D#5": "Ds5.mp3",
+            "F#5": "Fs5.mp3",
+            A5: "A5.mp3",
+            C6: "C6.mp3",
+            "D#6": "Ds6.mp3",
+            "F#6": "Fs6.mp3",
+            A6: "A6.mp3",
+            C7: "C7.mp3",
+            "D#7": "Ds7.mp3",
+            "F#7": "Fs7.mp3",
+            A7: "A7.mp3",
+          },
+          release: 0.8,
+          volume: -6,
+          attack: 0.005,
+          curve: "linear",
+          baseUrl: "https://tonejs.github.io/audio/salamander/",
+          onload: () => {
+            setPianoReady(true);
+          }
+        });
+        break;
+        
+      case 'organ':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/church_organ-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'synth':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/synth_brass_1-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'guitar':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/acoustic_guitar_steel-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'clean_e_guitar':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/electric_guitar_clean-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'harp':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/orchestral_harp-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'harpsichord':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.6,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/harpsichord-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'e_piano':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/electric_piano_1-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'vibraphone':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/vibraphone-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'choir':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/choir_aahs-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'fart_kit':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C3: '/sfx/fart1.mp3',
+            G3: '/sfx/fart2.mp3',
+            C4: '/sfx/fart3.mp3',
+          },
+          release: 0.4,
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'synth2':
+        newSynth = new Tone.PolySynth(Tone.Synth);
         setPianoReady(true);
-      }
-    }).toDestination();
+        break;
+        
+      case 'synth3':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/synth_bass_2-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'synth4':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/synth_bass_1-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'synth5':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/synth_strings_2-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'violin':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/violin-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'trumpet':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/trumpet-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
 
-//Audio Processing Chain
-   
+        
+      case 'reed_organ':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/reed_organ-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'rock_organ':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/rock_organ-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'shakuhachi':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/shakuhachi-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'shamisen':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/shamisen-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'shanai':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/shanai-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'slap_bass_2':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/slap_bass_2-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+
+        
+      case 'steel_drums':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/steel_drums-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'timpani':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/timpani-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'tinkle_bell':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/tinkle_bell-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'voice_oohs':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/voice_oohs-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'synth_choir':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/synth_choir-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'synth_drum':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/synth_drum-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'synth_strings_1':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/synth_strings_1-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'synth_strings_2':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/synth_strings_2-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'taiko_drum':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/taiko_drum-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'tango_accordion':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/tango_accordion-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'muted_trumpet':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.1,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/muted_trumpet-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+
+        
+      case 'ocarina':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/ocarina-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'orchestra_hit':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/orchestra_hit-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'overdriven_guitar':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/overdriven_guitar-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'pad_1_new_age':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/pad_1_new_age-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'pad_2_warm':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/pad_2_warm-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'pad_3_polysynth':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/pad_3_polysynth-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'pad_4_choir':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/pad_4_choir-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'pad_5_bowed':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.3,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/pad_5_bowed-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'pad_6_metallic':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/pad_6_metallic-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'pad_7_halo':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 3.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/pad_7_halo-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'pad_8_sweep':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.1,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/pad_8_sweep-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'pan_flute':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.6,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/pan_flute-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'percussive_organ':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.4,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/percussive_organ-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'helicopter':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/helicopter-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'honkytonk_piano':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/honkytonk_piano-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'kalimba':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/kalimba-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'koto':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/koto-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_1_square':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_1_square-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_2_sawtooth':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_2_sawtooth-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_3_calliope':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_3_calliope-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_4_chiff':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.6,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_4_chiff-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_5_charang':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_5_charang-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_6_voice':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_6_voice-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_7_fifths':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.9,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_7_fifths-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_8_bass_lead':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_8_bass_lead-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'marimba':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/marimba-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'melodic_tom':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/melodic_tom-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'music_box':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/music_box-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'percussive_organ':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.4,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/percussive_organ-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'helicopter':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/helicopter-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'honkytonk_piano':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/honkytonk_piano-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'kalimba':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/kalimba-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'koto':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/koto-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_1_square':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_1_square-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_2_sawtooth':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_2_sawtooth-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_3_calliope':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_3_calliope-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_4_chiff':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.6,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_4_chiff-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_5_charang':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_5_charang-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_6_voice':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_6_voice-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_7_fifths':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.9,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_7_fifths-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'lead_8_bass_lead':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/lead_8_bass_lead-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'marimba':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/marimba-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'melodic_tom':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/melodic_tom-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'music_box':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/music_box-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'flute':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/flute-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'french_horn':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/french_horn-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'fretless_bass':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/fretless_bass-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'fx_1_rain':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 3.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/fx_1_rain-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+
+        
+      case 'fx_3_crystal':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/fx_3_crystal-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'fx_4_atmosphere':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 3.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/fx_4_atmosphere-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'fx_5_brightness':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/fx_5_brightness-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'fx_6_goblins':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/fx_6_goblins-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'fx_7_echoes':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/fx_7_echoes-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'fx_8_scifi':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/fx_8_scifi-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'glockenspiel':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/glockenspiel-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'guitar_fret_noise':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/guitar_fret_noise-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'guitar_harmonics':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/guitar_harmonics-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'gunshot':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/gunshot-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'harmonica':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/harmonica-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+
+        
+      case 'distortion_guitar':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/distortion_guitar-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'drawbar_organ':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/drawbar_organ-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'dulcimer':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/dulcimer-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+
+        
+      case 'electric_bass_pick':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/electric_bass_pick-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'electric_grand_piano':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/electric_grand_piano-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'electric_guitar_clean':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/electric_guitar_clean-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'electric_guitar_jazz':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.4,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/electric_guitar_jazz-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'electric_guitar_muted':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 0.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/electric_guitar_muted-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'electric_piano_1':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.6,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/electric_piano_1-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'electric_piano_2':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/electric_piano_2-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+
+        
+
+        
+      case 'alto_sax':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/alto_sax-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+
+        
+      case 'bagpipe':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/bagpipe-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'banjo':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/banjo-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'baritone_sax':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/baritone_sax-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'bassoon':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/bassoon-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+
+        
+      case 'blown_bottle':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/blown_bottle-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'brass_section':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/brass_section-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'breath_noise':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.2,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/breath_noise-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'bright_acoustic_piano':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/bright_acoustic_piano-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'celesta':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.0,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/celesta-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+
+        
+      case 'choir_aahs':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/choir_aahs-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'church_organ':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 2.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/church_organ-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'accordion':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.6,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/accordion-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'acoustic_bass':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.4,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/acoustic_bass-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'acoustic_grand_piano':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.5,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/acoustic_grand_piano-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'acoustic_guitar_nylon':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.8,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/acoustic_guitar_nylon-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      case 'acoustic_guitar_steel':
+        newSynth = new Tone.Sampler({
+          urls: {
+            C2: 'C2.mp3',
+            D2: 'D2.mp3',
+            E2: 'E2.mp3',
+            F2: 'F2.mp3',
+            G2: 'G2.mp3',
+            A2: 'A2.mp3',
+            B2: 'B2.mp3',
+            C3: 'C3.mp3',
+            D3: 'D3.mp3',
+            E3: 'E3.mp3',
+            F3: 'F3.mp3',
+            G3: 'G3.mp3',
+            A3: 'A3.mp3',
+            B3: 'B3.mp3',
+            C4: 'C4.mp3',
+            D4: 'D4.mp3',
+            E4: 'E4.mp3',
+            F4: 'F4.mp3',
+            G4: 'G4.mp3',
+            A4: 'A4.mp3',
+            B4: 'B4.mp3',
+            C5: 'C5.mp3',
+            D5: 'D5.mp3',
+            E5: 'E5.mp3',
+          },
+          release: 1.6,
+          baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/MusyngKite/acoustic_guitar_steel-mp3/',
+          onload: () => setPianoReady(true),
+        });
+        break;
+        
+      default:
+        newSynth = new Tone.PolySynth(Tone.Synth);
+        setPianoReady(true);
+        break;
+    }
+
+    //Audio Processing Chain
     //Limiter prevents audio from exceeding maximum volume
     const masterLimiter = new Tone.Limiter(-2).toDestination();
     
@@ -377,20 +4532,20 @@ function AppContent() {
     });
 
     // Connect the audio chain, each component processes audio before passing it to next
-    piano.chain(eq, multiband, masterLimiter);
-    setSynth(piano);
+    newSynth.chain(eq, multiband, masterLimiter);
+    setSynth(newSynth);
 
     //Runs when 
     return () => {
       if (currentPart) {
         currentPart.dispose();
       }
-      piano.dispose();
+      newSynth.dispose();
       masterLimiter.dispose();
       multiband.dispose();
       eq.dispose();
     };
-  }, []);
+  }, [currentSoundType]);
 
   useEffect(() => {
     // Update looping behavior whenever isLooping changes
@@ -418,18 +4573,18 @@ function AppContent() {
     }
     Tone.Transport.cancel(); // Clean up previous scheduled events, including old scheduleOnce
 
-    Tone.Transport.bpm.value = bpm * playbackSpeed;
+    Tone.Transport.bpm.value = bpm;
 
     const newPart = new Tone.Part((time, note) => {
       try {
         const noteName = Tone.Frequency(note.midi, "midi").toNote();
         if (note.midi >= 18 && note.midi <= 108) {
-          synth.triggerAttackRelease(
-            noteName,
-            note.duration / playbackSpeed,
-            time,
-            note.velocity
-          );
+                  synth.triggerAttackRelease(
+          noteName,
+          note.duration / playbackSpeed,
+          time,
+          note.velocity
+        );
         }
       } catch (error) {
         console.warn(`Skipping note ${note.midi}: ${error.message}`);
@@ -641,11 +4796,26 @@ function AppContent() {
 
   //Projects properties: Note data, Background Image, Note Colors, etc.
   const handleNewProject = () => {
-    // ADDED: Payment check
-    if (!hasPaid) {
-      alert("You need an active membership to create new projects. Please visit our membership page.");
-      // Optionally, redirect to membership page or show a modal
-      // window.location.href = '/membership'; // Example redirect
+    // MODIFIED: Implement tier-based project limits
+    const getProjectLimit = () => {
+      if (!hasPaid) return 1; // Free tier: 1 project
+      if (currentUser?.activePlans?.includes('tier1')) return 20; // Tier 1: 20 projects
+      if (currentUser?.activePlans?.includes('tier2')) return Infinity; // Tier 2: unlimited
+      return 1; // Default to free tier if no plans found
+    };
+
+    const projectLimit = getProjectLimit();
+    
+    if (projects.length >= projectLimit) {
+      let message = '';
+      if (projectLimit === 1) {
+        message = "Free users can only have 1 project at a time. Please delete an existing project first, or upgrade your account for more projects.";
+      } else if (projectLimit === 20) {
+        message = "Tier 1 users can only have 20 projects. Please delete an existing project first, or upgrade to Tier 2 for unlimited projects.";
+      } else {
+        message = "You have reached your project limit. Please delete an existing project first, or upgrade your account for more projects.";
+      }
+      alert(message);
       return;
     }
 
@@ -692,12 +4862,8 @@ function AppContent() {
 
   //==============CHOOSE PROJECT====================
   const handleProjectSelect = async (projectListItem) => {
-    // ADDED: Payment check
-    if (!hasPaid) {
-      alert("You need an active membership to open projects. Please visit our membership page.");
-      // Optionally, redirect to membership page or show a modal
-      return;
-    }
+    // MODIFIED: Allow free users to access their existing projects
+    // No payment check needed - free users can access their projects
 
     try {
       if (currentPart) {
@@ -708,7 +4874,9 @@ function AppContent() {
       Tone.Transport.position = 0;
       Tone.Transport.seconds = 0;
       Tone.Transport.cancel();
-      if (synth) synth.releaseAll();
+      if (synth && typeof synth.releaseAll === 'function') {
+        synth.releaseAll();
+      }
       setIsPlaying(false);
       scrollPositionRef.current = 0;
       setCurrentPlaybackPosition(0);
@@ -885,6 +5053,10 @@ function AppContent() {
       setNoteData(fullProjectForState.midiData);    
       console.log("[HPS LOG 15] setNoteData called with:", JSON.stringify(fullProjectForState.midiData));
       
+      // Store original data for duration scaling
+      setOriginalNoteData(fullProjectForState.midiData);
+      setDurationScale(1); // Reset duration scale when loading new project
+      
       setTextAnnotations(fullProjectForState.textAnnotations); 
       console.log("[HPS LOG 16] setTextAnnotations called with:", JSON.stringify(fullProjectForState.textAnnotations));
       
@@ -914,6 +5086,30 @@ function AppContent() {
   const handleMidiFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
+
+    // ADDED: Check tier-based project limits before importing
+    const getProjectLimit = () => {
+      if (!hasPaid) return 1; // Free tier: 1 project
+      if (currentUser?.activePlans?.includes('tier1')) return 20; // Tier 1: 20 projects
+      if (currentUser?.activePlans?.includes('tier2')) return Infinity; // Tier 2: unlimited
+      return 1; // Default to free tier if no plans found
+    };
+
+    const projectLimit = getProjectLimit();
+    
+    if (projects.length >= projectLimit) {
+      let message = '';
+      if (projectLimit === 1) {
+        message = "Free users can only have 1 project at a time. Please delete an existing project first, or upgrade your account for more projects.";
+      } else if (projectLimit === 20) {
+        message = "Tier 1 users can only have 20 projects. Please delete an existing project first, or upgrade to Tier 2 for unlimited projects.";
+      } else {
+        message = "You have reached your project limit. Please delete an existing project first, or upgrade your account for more projects.";
+      }
+      alert(message);
+      event.target.value = null; // Reset file input
+      return;
+    }
 
     // ADDED: File size check for a better user experience before reading
     const MAX_FILE_SIZE_MB = 5;
@@ -1022,6 +5218,10 @@ function AppContent() {
           setCurrentHistoryIndex(0);
           setBackgroundImage(null);
           setCustomColors(null);
+          
+          // Store original data for duration scaling
+          setOriginalNoteData(midiNoteData);
+          setDurationScale(1); // Reset duration scale when loading new project
         } catch (error) {
           console.error('Error in saveProjectToStorage call:', error);
           alert('Error saving project. The MIDI file might be too large.');
@@ -1071,6 +5271,14 @@ function AppContent() {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Debug logging for file details
+    console.log('Audio file upload attempt:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      lastModified: file.lastModified
+    });
+
     // File size check
     const MAX_FILE_SIZE_MB = 50; // Audio files can be larger than MIDI
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
@@ -1114,12 +5322,27 @@ function AppContent() {
         let errorMsg = `HTTP error! status: ${response.status}`;
         try {
           const errorData = await response.json();
-          if (errorData.code === 'QUOTA_EXCEEDED') {
+          console.log('API Error Response:', errorData); // Debug logging
+          
+          if (errorData.code === 'PAYMENT_REQUIRED') {
+            errorMsg = 'AI Transcription is a premium feature. Please upgrade your account to use this feature.';
+          } else if (errorData.code === 'QUOTA_EXCEEDED') {
             errorMsg = errorData.message || 'You have reached your monthly transcription limit.';
-          } else if (errorData.error || errorData.message) {
-            errorMsg = errorData.error || errorData.message;
+          } else if (errorData.error) {
+            // Handle validation errors with more detail
+            if (errorData.details && Array.isArray(errorData.details)) {
+              const validationErrors = errorData.details.map(detail => detail.message).join(', ');
+              errorMsg = `Validation error: ${validationErrors}`;
+            } else {
+              errorMsg = errorData.error;
+            }
+          } else if (errorData.message) {
+            errorMsg = errorData.message;
           }
-        } catch {}
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          errorMsg = `HTTP error! status: ${response.status}`;
+        }
         alert(errorMsg);
         return;
       }
@@ -1233,7 +5456,7 @@ function AppContent() {
       // Create new project from transcribed audio
       const newProject = {
         id: uuidv4(),
-        name: file.name.replace(/\.(mp3|wav|m4a|flac|ogg)$/i, '') + ' (Transcribed)',
+        name: file.name.replace(/\.(mp3|wav|m4a|flac|ogg)$/i, ''),
         dateCreated: new Date(),
         dateModified: new Date(),
         midiData: midiNoteData,
@@ -1257,6 +5480,10 @@ function AppContent() {
       setCurrentHistoryIndex(0);
       setBackgroundImage(null);
       setCustomColors(null);
+      
+      // Store original data for duration scaling
+      setOriginalNoteData(midiNoteData);
+      setDurationScale(1); // Reset duration scale when loading new project
       handleRestart();
 
       // Show success message
@@ -1287,26 +5514,145 @@ function AppContent() {
   };
 
   const handleSave = () => {
+    // Check if user has paid access for MIDI export
+    if (!hasPaid) {
+      alert("MIDI export is a premium feature. Please upgrade your account to export your projects as MIDI files.");
+      return;
+    }
     setShowSaveDialog(true);
     setSaveFileName(currentProject?.name ? `${currentProject.name}.mid` : 'my-piano-roll.mid');
+  };
+
+  const handleSaveMusicXml = async () => {
+    // Check if user has paid access for MusicXML export
+    if (!hasPaid) {
+      alert("MusicXML export is a premium feature. Please upgrade your account to export your projects as MusicXML files.");
+      return;
+    }
+
+    try {
+      // Show loading state
+      setIsConvertingToXml(true);
+      setXmlError(null);
+
+      // Create JSON data with isLeftHand properties preserved
+      const jsonData = {
+        bpm: bpm || 120,
+        timeSignature: timeSignature || { numerator: 4, denominator: 4 },
+        totalNotes: noteData.tracks[0].notes.length,
+        title: currentProject?.name || 'Piano Composition',
+        notes: noteData.tracks[0].notes.map(note => ({
+          id: note.id,
+          midi: note.midi,
+          time: note.time,
+          duration: note.duration,
+          velocity: note.velocity || 0.8,
+          name: note.name,
+          isLeftHand: note.isLeftHand || false
+        }))
+      };
+
+      // Create FormData for the request
+      const formData = new FormData();
+      formData.append('json_data', JSON.stringify(jsonData));
+      
+      // Add metadata
+      if (bpm) formData.append('bpm', bpm.toString());
+      if (timeSignature) {
+        formData.append('timeSignature', JSON.stringify(timeSignature));
+      }
+      if (selectedKey) formData.append('key', selectedKey);
+
+      // Convert to MusicXML - Use the exact same approach as the working sheet music conversion
+      const apiBase = process.env.REACT_APP_API_BASE_URL || '';
+      const response = await fetch(`${apiBase}/api/notation/convert`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      console.log('MusicXML response status:', response.status);
+      console.log('MusicXML response ok:', response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('MusicXML conversion failed:', errorText);
+        throw new Error(`Conversion failed: ${errorText}`);
+      }
+
+      const musicXml = await response.text();
+      console.log('MusicXML received, length:', musicXml.length);
+      console.log('MusicXML first 200 chars:', musicXml.substring(0, 200));
+
+      // Create and download the MusicXML file
+      const blob = new Blob([musicXml], { type: 'application/vnd.recordare.musicxml+xml' });
+      console.log('Blob created, size:', blob.size);
+      
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      
+      const filename = currentProject?.name ? `${currentProject.name}.musicxml` : 'my-piano-roll.musicxml';
+      console.log('Downloading file as:', filename);
+      
+      link.download = filename;
+      link.click();
+      
+      console.log('Download link clicked');
+      
+      // Cleanup
+      URL.revokeObjectURL(link.href);
+      
+    } catch (error) {
+      console.error('MusicXML export failed:', error);
+      setXmlError(error.message);
+    } finally {
+      setIsConvertingToXml(false);
+    }
   };
 
   const handleSaveConfirm = () => {
     // Create a new MIDI file
     const midi = new Midi();
     
-    // Add a track with all notes
-    const track = midi.addTrack();
+    // Separate notes by hand assignment
+    const leftHandNotes = [];
+    const rightHandNotes = [];
     
-    // Add notes to the track
     noteData.tracks[0].notes.forEach(note => {
-      track.addNote({
+      if (note.isLeftHand) {
+        leftHandNotes.push(note);
+      } else {
+        rightHandNotes.push(note);
+      }
+    });
+    
+    // Create left hand track if there are left hand notes
+    if (leftHandNotes.length > 0) {
+      const leftTrack = midi.addTrack();
+      leftTrack.name = 'Piano LH';
+      leftHandNotes.forEach(note => {
+        leftTrack.addNote({
         midi: note.midi,
         time: note.time,
         duration: note.duration,
         velocity: note.velocity || 0.8
       });
     });
+    }
+    
+    // Create right hand track if there are right hand notes
+    if (rightHandNotes.length > 0) {
+      const rightTrack = midi.addTrack();
+      rightTrack.name = 'Piano RH';
+      rightHandNotes.forEach(note => {
+        rightTrack.addNote({
+          midi: note.midi,
+          time: note.time,
+          duration: note.duration,
+          velocity: note.velocity || 0.8
+        });
+      });
+    }
 
     // Convert to blob
     const bytes = midi.toArray();
@@ -1327,6 +5673,145 @@ function AppContent() {
     // Cleanup
     URL.revokeObjectURL(link.href);
     setShowSaveDialog(false);
+  };
+
+  // Helper: Build MIDI bytes from current noteData (similar to handleSaveConfirm logic)
+  const buildMidiBytesFromState = () => {
+    const midi = new Midi();
+    // Embed tempo and time signature so the notation service can interpret rhythm correctly
+    try {
+      if (bpm) {
+        midi.header.setTempo(bpm);
+      }
+      if (timeSignature && timeSignature.numerator && timeSignature.denominator) {
+        midi.header.timeSignatures = [
+          { ticks: 0, timeSignature: [timeSignature.numerator, timeSignature.denominator], measures: 0 }
+        ];
+      }
+    } catch (e) {
+      // Safe fallback if the MIDI header API changes
+    }
+    
+    // Separate notes by hand assignment
+    const leftHandNotes = [];
+    const rightHandNotes = [];
+    
+    noteData.tracks[0].notes.forEach(note => {
+      if (note.isLeftHand) {
+        leftHandNotes.push(note);
+      } else {
+        rightHandNotes.push(note);
+      }
+    });
+    
+    // Create left hand track if there are left hand notes
+    if (leftHandNotes.length > 0) {
+      const leftTrack = midi.addTrack();
+      leftTrack.name = 'Piano LH';
+      leftHandNotes.forEach(note => {
+        leftTrack.addNote({
+          midi: note.midi,
+          time: note.time,
+          duration: note.duration,
+          velocity: note.velocity || 0.8
+        });
+      });
+    }
+    
+    // Create right hand track if there are right hand notes
+    if (rightHandNotes.length > 0) {
+      const rightTrack = midi.addTrack();
+      rightTrack.name = 'Piano RH';
+      rightHandNotes.forEach(note => {
+        rightTrack.addNote({
+          midi: note.midi,
+          time: note.time,
+          duration: note.duration,
+          velocity: note.velocity || 0.8
+        });
+      });
+    }
+    
+    return midi.toArray();
+  };
+
+  const requestMusicXmlFromServer = async () => {
+    setIsConvertingToXml(true);
+    setXmlError(null);
+    try {
+      // Create JSON data with isLeftHand properties preserved
+      const jsonData = {
+        bpm: bpm || 120,
+        timeSignature: timeSignature || { numerator: 4, denominator: 4 },
+        totalNotes: noteData.tracks[0].notes.length,
+        title: currentProject?.name || 'Piano Composition',
+        notes: noteData.tracks[0].notes.map(note => ({
+          id: note.id,
+          midi: note.midi,
+          time: note.time,
+          duration: note.duration,
+          velocity: note.velocity || 0.8,
+          name: note.name,
+          isLeftHand: note.isLeftHand || false
+        }))
+      };
+
+      const form = new FormData();
+      form.append('json_data', JSON.stringify(jsonData));
+      form.append('bpm', String(bpm || 120));
+      form.append('timeSignature', JSON.stringify(timeSignature || { numerator: 4, denominator: 4 }));
+      form.append('key', selectedKey || 'C');
+
+      const apiBase = process.env.REACT_APP_API_BASE_URL || '';
+      const res = await fetch(`${apiBase}/api/notation/convert`, {
+        method: 'POST',
+        body: form,
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      const xml = await res.text();
+      setLastMusicXml(xml);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unknown error converting to MusicXML';
+      setXmlError(message);
+    } finally {
+      setIsConvertingToXml(false);
+    }
+  };
+
+  const handleToggleSheetMusic = async () => {
+    const next = !showSheetMusic;
+    setShowSheetMusic(next);
+    setShowSideBySide(false); // Ensure side-by-side is off when switching to sheet music only
+    if (next) {
+      // On first open or when dirty, refresh conversion
+      if (!lastMusicXml || isDirty) {
+        await requestMusicXmlFromServer();
+      }
+    }
+  };
+
+  const handleToggleSideBySide = async () => {
+    const next = !showSideBySide;
+    setShowSideBySide(next);
+    setShowSheetMusic(false); // Ensure sheet music only is off when switching to side-by-side
+    setShowJsonView(false); // Ensure JSON view is off
+    if (next) {
+      // On first open or when dirty, refresh conversion
+      if (!lastMusicXml || isDirty) {
+        await requestMusicXmlFromServer();
+      }
+    }
+  };
+
+  const handleToggleJsonView = () => {
+    const next = !showJsonView;
+    setShowJsonView(next);
+    setShowSheetMusic(false); // Ensure sheet music only is off
+    setShowSideBySide(false); // Ensure side-by-side is off
   };
 
   // Add this helper function to convert Map objects to plain objects
@@ -2018,7 +6503,7 @@ function AppContent() {
         cancelAnimationFrame(animationFrame);
       }
     };
-  }, [isPlaying, playbackSpeed]); // Removed songDuration from dependencies here
+  }, [isPlaying, playbackSpeed]); // Added playbackSpeed back since it affects audio timing
 
   // Add effect to update project when background or colors change
   useEffect(() => {
@@ -2154,10 +6639,23 @@ function AppContent() {
 
   // Add a BPM change handler
   const handleBpmChange = (newBpm) => {
+    console.log('handleBpmChange called with:', newBpm);
     setBpm(newBpm);
+    
+    // Calculate the new playback speed to match the BPM
+    // We want 60 BPM to play at 60 beats per minute in real time
+    // So if BPM is 60, we want playbackSpeed = 0.25 (quarter speed to make 60 beats take 60 seconds)
+    // If BPM is 120, we want playbackSpeed = 0.5 (half speed to make 60 beats take 30 seconds)
+    // If BPM is 30, we want playbackSpeed = 0.125 (eighth speed to make 60 beats take 120 seconds)
+    const newPlaybackSpeed = newBpm / 240;
+    console.log('Setting playback speed to:', newPlaybackSpeed);
+    setPlaybackSpeed(newPlaybackSpeed);
+    
     if (isPlaying) {
       // If playing, update the Transport BPM immediately
-      Tone.Transport.bpm.value = newBpm * playbackSpeed;
+      Tone.Transport.bpm.value = newBpm;
+      // Restart playback with new BPM
+      setupAndStartPlayback(Tone.Transport.seconds, true);
     }
     
     // Update the noteData with the new BPM
@@ -2890,7 +7388,7 @@ function AppContent() {
       )}
       {!currentUser ? (
         <Login />
-      ) : !isEditorView || !hasPaid ? ( // MODIFIED: Add !hasPaid check here for the main view switch
+      ) : !isEditorView ? ( // REMOVED: !hasPaid check - free users can access editor
         <ProjectList
           projects={projects}
           onNewProject={handleNewProject} // This will now have the payment check inside
@@ -2933,8 +7431,7 @@ function AppContent() {
             onTranspose={handleTranspose}
             timeSignature={timeSignature}
             onTimeSignatureChange={handleTimeSignatureChange}
-            playbackSpeed={playbackSpeed}
-            onSpeedChange={handleSpeedChange}
+
             totalBars={totalBars}
             noteCount={noteData.tracks[0].notes.length}
             isToolbarVisible={isToolbarVisible}
@@ -2964,6 +7461,19 @@ function AppContent() {
             setNoteBevel={setNoteBevel}
             noteOpacity={noteOpacity}
             setNoteOpacity={setNoteOpacity}
+            noteGradient={noteGradient}
+            setNoteGradient={handleSetNoteGradient}
+            noteMetallic={noteMetallic}
+            setNoteMetallic={handleSetNoteMetallic}
+            noteNeon={noteNeon}
+            setNoteNeon={handleSetNoteNeon}
+            notePulse={notePulse}
+            setNotePulse={handleSetNotePulse}
+
+            noteHolographic={noteHolographic}
+            setNoteHolographic={handleSetNoteHolographic}
+            noteIce={noteIce}
+            setNoteIce={handleSetNoteIce}
             onResetStyles={resetNoteStyles}
             // ADDED: Zoom props
             zoomLevel={zoomLevel}
@@ -2980,15 +7490,38 @@ function AppContent() {
             // ADDED: Playback props for minimal mode
             isPlaying={isPlaying}
             onPlayPauseToggle={handlePlayPauseToggle}
+            // ADDED: Audio sound type props
+            currentSoundType={currentSoundType}
+            setCurrentSoundType={setCurrentSoundType}
+            showSheetMusic={showSheetMusic}
+            onToggleSheetMusic={handleToggleSheetMusic}
+            showSideBySide={showSideBySide}
+            onToggleSideBySide={handleToggleSideBySide}
+            showJsonView={showJsonView}
+            onToggleJsonView={handleToggleJsonView}
+            // ADDED: BPM control props
+            bpm={bpm}
+            onBpmChange={handleBpmChange}
+            // ADDED: Save function props
+            onSave={handleSave}
+            onSaveMusicXml={handleSaveMusicXml}
+            // ADDED: Duration scale props
+            durationScale={durationScale}
+            onDurationScaleChange={handleDurationScaleChange}
+            onDurationScaleReset={handleDurationScaleReset}
           />
           
           <div className={`piano-roll-view ${isPianoFullscreen ? 'fullscreen-piano' : ''}`}>
-            {/* ADDED: console.log for debugging */}
-            {/* console.log('App.js: isPianoFullscreen before passing to Roll:', isPianoFullscreen) */}
-            <Roll 
+            {showSideBySide ? (
+              // Side-by-side view with MIDI data viewer
+              <div style={{ display: 'flex', height: '100%', width: '100%' }}>
+                {/* Left side - Piano Roll */}
+                <div style={{ flex: '1', borderRight: '1px solid #444' }}>
+              <Roll 
               midiData={noteData} 
               isPlaying={isPlaying} 
               bpm={bpm}
+              durationScale={durationScale}
               onUpdateMidiData={handleEditorUpdate}
               onUndo={handleUndo}
               onRedo={handleRedo}
@@ -3047,44 +7580,389 @@ function AppContent() {
               hasSelection={hasSelection}
               onTotalBarsChange={handleTotalBarsChange}
               isToolbarVisible={isToolbarVisible}
-              setIsToolbarVisible={setIsToolbarVisible} // Pass down setter to Roll
+                    setIsToolbarVisible={setIsToolbarVisible}
               textAnnotations={textAnnotations}
               setTextAnnotations={setTextAnnotations}
-              isCursorInToolbar={isCursorInToolbar} // Pass down
-              setIsCursorInToolbar={setIsCursorInToolbar} // Pass down
-              isPianoFullscreen={isPianoFullscreen} // ADDED: Pass down isPianoFullscreen
-              togglePianoFullscreen={togglePianoFullscreen} // Pass down function to Roll
-              showScaleHighlight={showScaleHighlight} // Pass down
-              selectedScale={selectedScale} // Pass down
-              setSelectedScale={setSelectedScale} // Pass down setter to Roll
-              selectedKey={selectedKey} // Pass down
-              setSelectedKey={setSelectedKey} // Pass down setter to Roll
-              setShowScaleHighlight={setShowScaleHighlight} // Pass down setter for scale highlight toggle
-              noteCount={noteData.tracks[0].notes.length} // Pass down noteCount to Roll
-              // ADDED: Pass Run Tool props to Roll
+                    isCursorInToolbar={isCursorInToolbar}
+                    setIsCursorInToolbar={setIsCursorInToolbar}
+                    isPianoFullscreen={isPianoFullscreen}
+                    togglePianoFullscreen={togglePianoFullscreen}
+                    showScaleHighlight={showScaleHighlight}
+                    selectedScale={selectedScale}
+                    setSelectedScale={setSelectedScale}
+                    selectedKey={selectedKey}
+                    setSelectedKey={setSelectedKey}
+                    setShowScaleHighlight={setShowScaleHighlight}
+                    noteCount={noteData.tracks[0].notes.length}
               runToolScale={runToolScale}
               onRunToolScaleChange={setRunToolScale}
               runToolKey={runToolKey}
               onRunToolKeyChange={setRunToolKey}
-              showNoteNames={showNoteNames} // Pass down
-              noteGlow={noteGlow} // Pass the noteGlow prop to Roll
+                    showNoteNames={showNoteNames}
+                    noteGlow={noteGlow}
               noteRoundness={noteRoundness}
               noteBevel={noteBevel}
               noteOpacity={noteOpacity}
-              // ADDED: Zoom prop
+              noteGradient={noteGradient}
+              noteMetallic={noteMetallic}
+              noteNeon={noteNeon}
+              notePulse={notePulse}
+              noteHolographic={noteHolographic}
+              noteIce={noteIce}
               zoomLevel={zoomLevel}
-              // ADDED: Recording mode props
               isRecordingMode={isRecordingMode}
               recordingPreset={recordingPreset}
-              // ADDED: Minimal mode prop
+                    isMinimalMode={isMinimalMode}
+                    renderNote={(noteProps) => (
+                      <Note
+                        {...noteProps}
+                        noteGlow={noteGlow}
+                        noteGradient={noteGradient}
+                        noteMetallic={noteMetallic}
+                        noteNeon={noteNeon}
+                        notePulse={notePulse}
+                        noteHolographic={noteHolographic}
+                        noteIce={noteIce}
+                      />
+                    )}
+                  />
+                </div>
+                {/* Right side - Sheet Music and MIDI Data */}
+                <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+                  
+
+                  
+                  {isConvertingToXml && (
+                    <div className="modal-overlay" style={{ zIndex: 1500 }}>
+                      <div className="modal" style={{ textAlign: 'center' }}>
+                        <h3>Generating Sheet Music…</h3>
+                        <div className="spinner"></div>
+                      </div>
+                    </div>
+                  )}
+                  {xmlError && (
+                    <div className="modal-overlay" style={{ zIndex: 1500 }}>
+                      <div className="modal" style={{ backgroundColor: '#ffdddd', border: '1px solid red', padding: '20px', borderRadius: '5px', textAlign: 'center' }}>
+                        <h4>Conversion Failed</h4>
+                        <p style={{ color: 'black', wordBreak: 'break-word' }}>{xmlError}</p>
+                        <button onClick={requestMusicXmlFromServer} style={{ marginTop: '10px', padding: '8px 15px' }}>Retry</button>
+                      </div>
+                    </div>
+                  )}
+                  {lastMusicXml && !isConvertingToXml && (
+                    <SheetMusicView
+                      musicXml={lastMusicXml}
+                      zoomLevel={zoomLevel}
+                      noteData={noteData}
+                      isPlaying={isPlaying}
+                      playbackSpeed={playbackSpeed}
+                      onPlayPauseToggle={handlePlayPauseToggle}
+                      onRefreshNotation={requestMusicXmlFromServer}
+                    />
+                  )}
+                </div>
+              </div>
+            ) : showJsonView ? (
+              // JSON view - Piano Roll and JSON data only
+              <div style={{ display: 'flex', height: '100%', width: '100%' }}>
+                {/* Left side - Piano Roll */}
+                <div style={{ flex: '1', borderRight: '1px solid #444' }}>
+                  <Roll 
+                    midiData={noteData} 
+                    isPlaying={isPlaying} 
+                    bpm={bpm}
+                    durationScale={durationScale}
+                    onUpdateMidiData={handleEditorUpdate}
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    synth={synth}
+                    onSave={handleSave}
+                    onPlayPauseToggle={handlePlayPauseToggle}
+                    isTextToolActive={isTextToolActive}
+                    setIsTextToolActive={setIsTextToolActive}
+                    isLooping={isLooping}
+                    setIsLooping={setIsLooping}
+                    playbackSpeed={playbackSpeed}
+                    onSpeedChange={handleSpeedChange}
+                    isAddChordToolActive={isAddChordToolActive}
+                    setIsAddChordToolActive={setIsAddChordToolActive}
+                    selectedChordType={selectedChordType}
+                    setSelectedChordType={setSelectedChordType}
+                    backgroundImage={backgroundImage}
+                    onBackgroundImageChange={handleBackgroundImageChange}
+                    customColors={customColors}
+                    onCustomColorsChange={handleCustomColorsChange}
+                    timeSignature={timeSignature}
+                    onTimeSignatureChange={handleTimeSignatureChange}
+                    transpositionTargets={transpositionTargets}
+                    currentTransposeTargetId={currentTransposeTargetId}
+                    onTranspose={handleTranspose}
+                    songPosition={currentPlaybackPosition}
+                    songDuration={songDuration}
+                    handlePositionChange={(e) => {
+                      const newPosition = Number(e.target.value);
+                      setCurrentPlaybackPosition(newPosition);
+                      scrollPositionRef.current = newPosition;
+                      Tone.Transport.seconds = newPosition / playbackSpeed;
+                      const rollComponent = document.querySelector('.notes-container');
+                      if (rollComponent) {
+                        rollComponent.scrollLeft = newPosition * 100; 
+                      }
+                    }}
+                    onScrollPositionChange={(newPosition) => {
+                      setCurrentPlaybackPosition(newPosition);
+                    }}
+                    scrollPositionRef={scrollPositionRef}
+                    noteGroups={noteGroups}
+                    groupColors={groupColors}
+                    onNoteGroupsChange={setNoteGroups}
+                    onGroupColorsChange={setGroupColors}
+                    clipboardNotes={clipboardNotes}
+                    onCopy={handleCopy}
+                    onPaste={handlePaste}
+                    onDelete={handleDelete}
+                    showGrid={showGrid}
+                    setShowGrid={setShowGrid}
+                    isSnapToGridActive={isSnapToGridActive}
+                    setIsSnapToGridActive={setIsSnapToGridActive}
+                    hasSelection={hasSelection}
+                    onTotalBarsChange={handleTotalBarsChange}
+                    isToolbarVisible={isToolbarVisible}
+                    setIsToolbarVisible={setIsToolbarVisible}
+                    textAnnotations={textAnnotations}
+                    setTextAnnotations={setTextAnnotations}
+                    isCursorInToolbar={isCursorInToolbar}
+                    setIsCursorInToolbar={setIsCursorInToolbar}
+                    isPianoFullscreen={isPianoFullscreen}
+                    togglePianoFullscreen={togglePianoFullscreen}
+                    showScaleHighlight={showScaleHighlight}
+                    selectedScale={selectedScale}
+                    setSelectedScale={setSelectedScale}
+                    selectedKey={selectedKey}
+                    setSelectedKey={setSelectedKey}
+                    setShowScaleHighlight={setShowScaleHighlight}
+                    noteCount={noteData.tracks[0].notes.length}
+                    runToolScale={runToolScale}
+                    onRunToolScaleChange={setRunToolScale}
+                    runToolKey={runToolKey}
+                    onRunToolKeyChange={setRunToolKey}
+                    showNoteNames={showNoteNames}
+                    noteGlow={noteGlow}
+                    noteRoundness={noteRoundness}
+                    noteBevel={noteBevel}
+                    noteOpacity={noteOpacity}
+                    noteGradient={noteGradient}
+                    noteMetallic={noteMetallic}
+                    noteNeon={noteNeon}
+                    notePulse={notePulse}
+                    noteHolographic={noteHolographic}
+                    noteIce={noteIce}
+                    zoomLevel={zoomLevel}
+                    isRecordingMode={isRecordingMode}
+                    recordingPreset={recordingPreset}
+                    isMinimalMode={isMinimalMode}
+                    renderNote={(noteProps) => (
+                      <Note
+                        {...noteProps}
+                        noteGlow={noteGlow}
+                        noteGradient={noteGradient}
+                        noteMetallic={noteMetallic}
+                        noteNeon={noteNeon}
+                        notePulse={notePulse}
+                        noteHolographic={noteHolographic}
+                        noteIce={noteIce}
+                      />
+                    )}
+                  />
+                </div>
+                {/* Right side - JSON Data Only */}
+                <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+                  
+                  {/* JSON Data Viewer */}
+                  <div style={{ 
+                    padding: '8px 12px', 
+                    backgroundColor: '#1a1a1a',
+                    height: '100%',
+                    overflow: 'auto'
+                  }}>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#fff' }}>JSON Data Structure</h4>
+                    <div style={{ 
+                      backgroundColor: '#000', 
+                      padding: '8px', 
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontFamily: 'monospace',
+                      color: '#00ff00',
+                      height: 'calc(100% - 40px)',
+                      overflow: 'auto'
+                    }}>
+                      <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                        {JSON.stringify({
+                          title: currentProject?.name || 'Piano Composition',
+                          bpm: bpm,
+                          timeSignature: timeSignature,
+                          totalNotes: noteData.tracks[0].notes.length,
+                          notes: noteData.tracks[0].notes.map(note => ({
+                            id: note.id,
+                            midi: note.midi,
+                            time: note.time,
+                            duration: note.duration,
+                            velocity: note.velocity,
+                            name: note.name,
+                            isLeftHand: note.isLeftHand
+                          }))
+                        }, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : showSheetMusic ? (
+              // Sheet music only view
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                {isConvertingToXml && (
+                  <div className="modal-overlay" style={{ zIndex: 1500 }}>
+                    <div className="modal" style={{ textAlign: 'center' }}>
+                      <h3>Generating Sheet Music…</h3>
+                      <div className="spinner"></div>
+                    </div>
+                  </div>
+                )}
+                {xmlError && (
+                  <div className="modal-overlay" style={{ zIndex: 1500 }}>
+                    <div className="modal" style={{ backgroundColor: '#ffdddd', border: '1px solid red', padding: '20px', borderRadius: '5px', textAlign: 'center' }}>
+                      <h4>Conversion Failed</h4>
+                      <p style={{ color: 'black', wordBreak: 'break-word' }}>{xmlError}</p>
+                      <button onClick={requestMusicXmlFromServer} style={{ marginTop: '10px', padding: '8px 15px' }}>Retry</button>
+                    </div>
+                  </div>
+                )}
+                {lastMusicXml && !isConvertingToXml && (
+                  <SheetMusicView
+                    musicXml={lastMusicXml}
+                    zoomLevel={zoomLevel}
+                    noteData={noteData}
+                    isPlaying={isPlaying}
+                    playbackSpeed={playbackSpeed}
+                    onPlayPauseToggle={handlePlayPauseToggle}
+                    onRefreshNotation={requestMusicXmlFromServer}
+                  />
+                )}
+              </div>
+            ) : (
+              // Piano roll only view
+              <Roll 
+                midiData={noteData} 
+                isPlaying={isPlaying} 
+                bpm={bpm}
+                durationScale={durationScale}
+                onUpdateMidiData={handleEditorUpdate}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                synth={synth}
+                onSave={handleSave}
+                onPlayPauseToggle={handlePlayPauseToggle}
+                isTextToolActive={isTextToolActive}
+                setIsTextToolActive={setIsTextToolActive}
+                isLooping={isLooping}
+                setIsLooping={setIsLooping}
+                playbackSpeed={playbackSpeed}
+                onSpeedChange={handleSpeedChange}
+                isAddChordToolActive={isAddChordToolActive}
+                setIsAddChordToolActive={setIsAddChordToolActive}
+                selectedChordType={selectedChordType}
+                setSelectedChordType={setSelectedChordType}
+                backgroundImage={backgroundImage}
+                onBackgroundImageChange={handleBackgroundImageChange}
+                customColors={customColors}
+                onCustomColorsChange={handleCustomColorsChange}
+                timeSignature={timeSignature}
+                onTimeSignatureChange={handleTimeSignatureChange}
+                transpositionTargets={transpositionTargets}
+                currentTransposeTargetId={currentTransposeTargetId}
+                onTranspose={handleTranspose}
+                songPosition={currentPlaybackPosition}
+                songDuration={songDuration}
+                handlePositionChange={(e) => {
+                  const newPosition = Number(e.target.value);
+                  setCurrentPlaybackPosition(newPosition);
+                  scrollPositionRef.current = newPosition;
+                  Tone.Transport.seconds = newPosition / playbackSpeed;
+                  const rollComponent = document.querySelector('.notes-container');
+                  if (rollComponent) {
+                    rollComponent.scrollLeft = newPosition * 100; 
+                  }
+                }}
+                onScrollPositionChange={(newPosition) => {
+                  setCurrentPlaybackPosition(newPosition);
+                }}
+                scrollPositionRef={scrollPositionRef}
+                noteGroups={noteGroups}
+                groupColors={groupColors}
+                onNoteGroupsChange={setNoteGroups}
+                onGroupColorsChange={setGroupColors}
+                clipboardNotes={clipboardNotes}
+                onCopy={handleCopy}
+                onPaste={handlePaste}
+                onDelete={handleDelete}
+                showGrid={showGrid}
+                setShowGrid={setShowGrid}
+                isSnapToGridActive={isSnapToGridActive}
+                setIsSnapToGridActive={setIsSnapToGridActive}
+                hasSelection={hasSelection}
+                onTotalBarsChange={handleTotalBarsChange}
+                isToolbarVisible={isToolbarVisible}
+                setIsToolbarVisible={setIsToolbarVisible}
+                textAnnotations={textAnnotations}
+                setTextAnnotations={setTextAnnotations}
+                isCursorInToolbar={isCursorInToolbar}
+                setIsCursorInToolbar={setIsCursorInToolbar}
+                isPianoFullscreen={isPianoFullscreen}
+                togglePianoFullscreen={togglePianoFullscreen}
+                showScaleHighlight={showScaleHighlight}
+                selectedScale={selectedScale}
+                setSelectedScale={setSelectedScale}
+                selectedKey={selectedKey}
+                setSelectedKey={setSelectedKey}
+                setShowScaleHighlight={setShowScaleHighlight}
+                noteCount={noteData.tracks[0].notes.length}
+                runToolScale={runToolScale}
+                onRunToolScaleChange={setRunToolScale}
+                runToolKey={runToolKey}
+                onRunToolKeyChange={setRunToolKey}
+                showNoteNames={showNoteNames}
+                noteGlow={noteGlow}
+                noteRoundness={noteRoundness}
+                noteBevel={noteBevel}
+                noteOpacity={noteOpacity}
+                noteGradient={noteGradient}
+                noteMetallic={noteMetallic}
+                noteNeon={noteNeon}
+                notePulse={notePulse}
+                noteHolographic={noteHolographic}
+                noteIce={noteIce}
+                zoomLevel={zoomLevel}
+                isRecordingMode={isRecordingMode}
+                recordingPreset={recordingPreset}
               isMinimalMode={isMinimalMode}
               renderNote={(noteProps) => (
                 <Note
                   {...noteProps}
                   noteGlow={noteGlow}
+                  noteGradient={noteGradient}
+                  noteMetallic={noteMetallic}
+                  noteNeon={noteNeon}
+                  notePulse={notePulse}
+                  noteHolographic={noteHolographic}
+                  noteIce={noteIce}
                 />
               )}
             />
+            )}
             
             {!isMinimalMode && (
               <PlaybackControls
@@ -3092,6 +7970,7 @@ function AppContent() {
                 onPlayPauseToggle={handlePlayPauseToggle}
                 onRestart={handleRestart}
                 onSave={handleSave}
+                onSaveMusicXml={handleSaveMusicXml}
                 playbackSpeed={playbackSpeed}
                 onSpeedChange={handleSpeedChange}
                 songPosition={currentPlaybackPosition}
@@ -3108,7 +7987,33 @@ function AppContent() {
                 }}
                 volume={volume}
                 onVolumeChange={handleVolumeChange}
+                currentUser={currentUser}
+                // ADDED: Audio sound type props
+                currentSoundType={currentSoundType}
+                // ADDED: Minimal mode props
+                isMinimalMode={isMinimalMode}
+                toggleMinimalMode={() => setIsMinimalMode(!isMinimalMode)}
               />
+            )}
+
+            {/* Minimal Mode Controls - Top Right Corner */}
+            {isMinimalMode && (
+              <>
+                <button 
+                  onClick={() => setIsMinimalMode(false)}
+                  className="minimal-mode-btn-top-right active"
+                  title="Exit Minimal Mode (M)"
+                >
+                  <i className="fas fa-compress-arrows-alt"></i>
+                </button>
+                <button 
+                  onClick={handlePlayPauseToggle}
+                  className="minimal-play-btn-top-right"
+                  title={`${isPlaying ? 'Pause' : 'Play'} (Space)`}
+                >
+                  <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play'}`}></i>
+                </button>
+              </>
             )}
           </div>
         </main>
@@ -3143,5 +8048,5 @@ const App = () => {
     </AuthProvider>
   );
 };
-export default App;
 
+export default App;

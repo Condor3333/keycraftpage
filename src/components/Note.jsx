@@ -90,6 +90,13 @@ const Note = ({
   noteRoundness = 4,
   noteBevel = 0,
   noteOpacity = 1,
+  noteGradient = false,
+  noteMetallic = false,
+  noteNeon = false,
+  notePulse = false,
+  noteGlass = false,
+  noteHolographic = false,
+  noteIce = false,
   // Grid snapping props
   isSnapToGridActive,
   selectedDuration,
@@ -107,7 +114,9 @@ const Note = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeDirection, setResizeDirection] = useState(null);
-
+  // ADDED: Mobile drag handler state
+  const [showMobileHandlers, setShowMobileHandlers] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Local visual state for smooth animations
   const [currentVisualX, setCurrentVisualX] = useState(Math.floor(x));
@@ -116,6 +125,49 @@ const Note = ({
 
   // Ref to store initial state at the start of an interaction (drag or resize)
   const interactionStartRef = useRef(null);
+
+  // ADDED: Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                           (window.innerWidth <= 768 && 'ontouchstart' in window);
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // ADDED: Hide mobile handlers when note is deselected
+  useEffect(() => {
+    if (!groupId) {
+      setShowMobileHandlers(false);
+    }
+  }, [groupId]);
+
+  // ADDED: Hide mobile handlers when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showMobileHandlers && isMobile) {
+        // Check if click is outside the note
+        const noteElement = document.querySelector(`[data-note-id="${note.id}"]`);
+        if (noteElement && !noteElement.contains(e.target)) {
+          setShowMobileHandlers(false);
+        }
+      }
+    };
+
+    if (showMobileHandlers && isMobile) {
+      document.addEventListener('touchstart', handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMobileHandlers, isMobile, note.id]);
 
   const getBaseColor = () => {
     if (customColors) {
@@ -212,6 +264,38 @@ const Note = ({
     e.preventDefault(); // Prevent default touch behavior
 
     playNote();
+
+    // ADDED: Mobile drag handler logic
+    if (isMobile && groupId) {
+      // If note is selected and we're on mobile, show handlers on second touch
+      if (showMobileHandlers) {
+        // Handlers are already visible, start dragging
+        setIsDragging(true);
+        const touch = e.touches[0];
+        interactionStartRef.current = {
+          mouseX: touch.clientX,
+          mouseY: touch.clientY,
+          initialVisualX: currentVisualX,
+          initialVisualY: currentVisualY,
+          initialVisualHeight: currentVisualHeight,
+        };
+        
+        const dragStartEvent = new CustomEvent('note-drag-start', {
+          detail: {
+            noteId: note.midi,
+            isLeftHand: isLeftHand
+          }
+        });
+        window.dispatchEvent(dragStartEvent);
+        
+        onDragStart?.(note);
+        return;
+      } else {
+        // First touch on selected note - show handlers
+        setShowMobileHandlers(true);
+        return;
+      }
+    }
 
     if (!isResizing && !groupId && onClick) {
        onClick(note); // Call onClick to handle selection if passed
@@ -419,6 +503,72 @@ const Note = ({
     // onResize in Roll.jsx handles the final update to musical data and forces visual recalculation
   };
 
+  // ADDED: Mobile resize handlers
+  const handleMobileResizeStart = (e, direction) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsResizing(true);
+    setResizeDirection(direction);
+    const touch = e.touches[0];
+    interactionStartRef.current = {
+      mouseY: touch.clientY,
+      initialVisualY: currentVisualY,
+      initialVisualHeight: currentVisualHeight,
+      initialVisualBottomY: currentVisualY + currentVisualHeight,
+    };
+  };
+
+  const handleMobileResizeMove = (e) => {
+    if (!isResizing || !interactionStartRef.current) return;
+    e.preventDefault();
+
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - interactionStartRef.current.mouseY;
+    let newVisualY = interactionStartRef.current.initialVisualY;
+    let newVisualHeight = interactionStartRef.current.initialVisualHeight;
+
+    if (resizeDirection === 'top') {
+      newVisualY = interactionStartRef.current.initialVisualY + deltaY;
+      newVisualHeight = interactionStartRef.current.initialVisualBottomY - newVisualY;
+    } else { // 'bottom'
+      newVisualHeight = interactionStartRef.current.initialVisualHeight + deltaY;
+    }
+
+    // Ensure minimum height
+    const minPixelHeight = Math.max(1, 10 / heightFactor);
+
+    if (newVisualHeight < minPixelHeight) {
+      if (resizeDirection === 'top') {
+        newVisualY = interactionStartRef.current.initialVisualBottomY - minPixelHeight;
+      }
+      newVisualHeight = minPixelHeight;
+    }
+
+    // Apply grid snapping
+    let finalVisualY = newVisualY;
+    let finalVisualHeight = newVisualHeight;
+    
+    if (isSnapToGridActive && calculateSnappedVisualPosition) {
+      const snapped = calculateSnappedVisualPosition(newVisualY, newVisualHeight, resizeDirection);
+      finalVisualY = snapped.visualY;
+      finalVisualHeight = snapped.visualHeight;
+    }
+    
+    setCurrentVisualY(Math.floor(finalVisualY));
+    setCurrentVisualHeight(finalVisualHeight);
+
+    const newMusicalDuration = finalVisualHeight / (PIXELS_PER_SECOND * heightFactor);
+    const visualTopYForCallback = Math.floor(finalVisualY);
+    
+    onResize?.(note, newMusicalDuration, visualTopYForCallback, resizeDirection);
+  };
+
+  const handleMobileResizeEnd = () => {
+    setIsResizing(false);
+    setResizeDirection(null);
+    interactionStartRef.current = null;
+  };
+
   useEffect(() => {
     if (isDragging) {
       // Add event listener to the window so when mouse/touch leaves note, it still triggers the move event
@@ -443,13 +593,25 @@ const Note = ({
       //Add event listeners to window when resizing starts
       window.addEventListener('mousemove', handleResizeMove);
       window.addEventListener('mouseup', handleResizeEnd);
+      // ADDED: Mobile resize event listeners
+      if (isMobile) {
+        window.addEventListener('touchmove', handleMobileResizeMove, { passive: false });
+        window.addEventListener('touchend', handleMobileResizeEnd);
+        window.addEventListener('touchcancel', handleMobileResizeEnd);
+      }
       return () => {
         //Removes event listeners when resizing ends
         window.removeEventListener('mousemove', handleResizeMove);
         window.removeEventListener('mouseup', handleResizeEnd);
+        // ADDED: Remove mobile resize event listeners
+        if (isMobile) {
+          window.removeEventListener('touchmove', handleMobileResizeMove);
+          window.removeEventListener('touchend', handleMobileResizeEnd);
+          window.removeEventListener('touchcancel', handleMobileResizeEnd);
+        }
       };
     }
-  }, [isResizing]);
+  }, [isResizing, isMobile]);
 
   useEffect(() => {
     // Sync with props when we're not actively interacting
@@ -485,7 +647,7 @@ const Note = ({
 
   const isSelected = !!groupId;
   // Combine all classes including glow class
-  const noteClasses = `note note-component ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''} ${noteGlow > 0 ? 'glowing' : ''}`;
+  const noteClasses = `note note-component ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''} ${noteGlow > 0 ? 'glowing' : ''} ${noteGradient > 0 ? 'gradient' : ''} ${noteMetallic > 0 ? 'metallic' : ''} ${noteNeon > 0 ? 'neon' : ''} ${notePulse > 0 ? 'pulse' : ''} ${noteHolographic > 0 ? 'holographic' : ''} ${noteIce > 0 ? 'ice' : ''}`;
 
   const getNoteName = () => {
     if (!note || typeof note.midi === 'undefined') return '';
@@ -526,6 +688,79 @@ const Note = ({
     noteStyle.filter = glowFilter;
   }
 
+  // Apply gradient style if noteGradient > 0
+  if (noteGradient > 0) {
+    const baseColor = getBaseColor();
+    const intensity = noteGradient / 10; // Convert 0-10 to 0-1
+    const lighterColor = shadeColor(baseColor, 30 * intensity); // Scale by intensity
+    const darkerColor = shadeColor(baseColor, -20 * intensity); // Scale by intensity
+    
+    noteStyle.background = `linear-gradient(135deg, ${lighterColor} 0%, ${baseColor} 50%, ${darkerColor} 100%)`;
+    noteStyle.backgroundImage = `linear-gradient(135deg, ${lighterColor} 0%, ${baseColor} 50%, ${darkerColor} 100%)`;
+    
+    // Add a subtle texture effect with multiple gradients
+    noteStyle.backgroundImage = `
+      linear-gradient(135deg, ${lighterColor} 0%, ${baseColor} 50%, ${darkerColor} 100%),
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,${0.1 * intensity}) 0%, transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(0,0,0,${0.1 * intensity}) 0%, transparent 50%)
+    `;
+  }
+
+  // Apply metallic style if noteMetallic > 0
+  if (noteMetallic > 0) {
+    const baseColor = getBaseColor();
+    const intensity = noteMetallic / 10; // Convert 0-10 to 0-1
+    const lighterColor = shadeColor(baseColor, 40 * intensity); // Scale by intensity
+    const darkerColor = shadeColor(baseColor, -30 * intensity); // Scale by intensity
+    
+    noteStyle.background = `linear-gradient(145deg, ${lighterColor}, ${baseColor}, ${darkerColor}, ${baseColor})`;
+    noteStyle.boxShadow = `
+      inset ${2 * intensity}px ${2 * intensity}px ${4 * intensity}px rgba(255,255,255,${0.8 * intensity}),
+      inset -${2 * intensity}px -${2 * intensity}px ${4 * intensity}px rgba(0,0,0,${0.2 * intensity}),
+      0 ${4 * intensity}px ${8 * intensity}px rgba(0,0,0,${0.3 * intensity})
+    `;
+    noteStyle.border = `${intensity}px solid rgba(255,255,255,${0.3 * intensity})`;
+  }
+
+  // Apply neon style if noteNeon > 0
+  if (noteNeon > 0) {
+    const baseColor = getBaseColor();
+    const intensity = noteNeon / 10; // Convert 0-10 to 0-1
+    noteStyle.color = baseColor; // Set currentColor for neon glow
+    noteStyle.backgroundColor = baseColor; // Keep original color for neon effect
+    noteStyle.boxShadow = `0 0 ${10 * intensity}px ${baseColor}, 0 0 ${20 * intensity}px ${baseColor}`;
+  }
+
+
+
+  // Apply holographic style if noteHolographic > 0
+  if (noteHolographic > 0) {
+    const intensity = noteHolographic / 10; // Convert 0-10 to 0-1
+    noteStyle.backgroundColor = 'transparent'; // Let CSS handle the holographic background
+    noteStyle.opacity = 0.8 + (0.2 * intensity); // Adjust opacity based on intensity
+  }
+
+  // Apply pulse style if notePulse > 0
+  if (notePulse > 0) {
+    const intensity = notePulse / 10; // Convert 0-10 to 0-1
+    noteStyle.animation = `pulse ${1 + (2 * intensity)}s ease-in-out infinite`;
+    noteStyle.animationDelay = `${Math.random() * 2}s`; // Random delay for variety
+  }
+
+  // Apply ice style if noteIce > 0
+  if (noteIce > 0) {
+    const intensity = noteIce / 10; // Convert 0-10 to 0-1
+    const baseColor = getBaseColor();
+    const iceColor = shadeColor(baseColor, 20 * intensity); // Make it lighter/blue-ish
+    
+    noteStyle.background = `linear-gradient(135deg, ${iceColor} 0%, ${baseColor} 50%, ${iceColor} 100%)`;
+    noteStyle.border = `${intensity}px solid rgba(255, 255, 255, ${0.5 * intensity})`;
+    noteStyle.boxShadow = `
+      0 0 ${10 * intensity}px rgba(173, 216, 230, ${0.5 * intensity}),
+      inset 0 0 ${5 * intensity}px rgba(255, 255, 255, ${0.3 * intensity})
+    `;
+  }
+
   return (
     <>
       <div
@@ -540,7 +775,8 @@ const Note = ({
           if (onDoubleClick) onDoubleClick();
         }}
       >
-        {isSelected && !isRecordingMode && (
+        {/* Desktop resize handles - always visible on hover for selected notes */}
+        {isSelected && !isRecordingMode && !isMobile && (
           <>
             <div
               className="resize-handle top"
@@ -552,6 +788,21 @@ const Note = ({
             />
           </>
         )}
+        
+        {/* Mobile resize handles - only visible after second touch */}
+        {isSelected && !isRecordingMode && isMobile && showMobileHandlers && (
+          <>
+            <div
+              className="resize-handle mobile-handle top"
+              onTouchStart={(e) => handleMobileResizeStart(e, 'top')}
+            />
+            <div
+              className="resize-handle mobile-handle bottom"
+              onTouchStart={(e) => handleMobileResizeStart(e, 'bottom')}
+            />
+          </>
+        )}
+        
         {showNoteNames && <span className="note-name-display">{getNoteName()}</span>}
         {/* ... rest of the note content ... */}
       </div>

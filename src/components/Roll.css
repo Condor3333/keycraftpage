@@ -183,12 +183,12 @@ body.toolbar-sidebar .piano-container {
   /* Portrait phone layout - explicit positioning */
   #piano-roll-container {
     position: fixed !important;
-    top: calc(40px + 60px) !important; /* header + toolbar */
+    top: 40px !important; /* Just header height */
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
     width: 100% !important;
-    height: calc(100% - 100px) !important; /* Subtract header + toolbar */
+    height: calc(100% - 40px) !important; /* Subtract just header */
     z-index: 999 !important;
     display: flex !important;
     flex-direction: column !important;
@@ -205,7 +205,7 @@ body.toolbar-sidebar .piano-container {
 
   .notes-container {
     position: fixed !important;
-    top: calc(40px + 60px) !important; /* header + toolbar */
+    top: 40px !important; /* Just header height */
     left: 0 !important;
     right: 0 !important;
     bottom: 145px !important; /* piano + controls */

@@ -97,7 +97,7 @@ const getIntervalName = (semitones) => {
 };
 
 // Helper function to determine chord inversion and voicing
-const analyzeVoicing = (notes, rootMidi, chordIntervals) => {
+const analyzeVoicing = (notes, rootMidi, chordIntervals, chordName) => {
   const sortedNotes = [...notes].sort((a, b) => a.midi - b.midi);
   const bassNote = sortedNotes[0].midi;
   const intervals = sortedNotes.map(note => (note.midi - rootMidi + 1200) % 12);
@@ -140,10 +140,14 @@ const analyzeVoicing = (notes, rootMidi, chordIntervals) => {
     }
   }
 
-  // Combine information
+  // Only show voicing info if it's NOT root position closed voicing
   let voicingInfo = [];
-  if (inversionName) voicingInfo.push(inversionName);
-  if (voicingType) voicingInfo.push(voicingType + ' voicing');
+  if (inversionName && inversionName !== 'root position') {
+    voicingInfo.push(inversionName);
+  }
+  if (voicingType && voicingType !== 'close') {
+    voicingInfo.push(voicingType + ' voicing');
+  }
   
   return voicingInfo.length > 0 ? ` (${voicingInfo.join(', ')})` : '';
 };
@@ -256,7 +260,7 @@ const detectChord = (notes) => {
       
       if (hasRequiredIntervals && allIntervalsValid) {
         const { noteName } = getNoteNameAndOctave(rootNote);
-        const voicingInfo = analyzeVoicing(notes, rootNote, chordIntervals);
+        const voicingInfo = analyzeVoicing(notes, rootNote, chordIntervals, chord.name);
         return `${noteName} ${chord.name}${voicingInfo}`;
       }
     }

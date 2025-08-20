@@ -1,16 +1,54 @@
 /* Header Bar */
 .header-bar {
-  padding: 6px;
+  padding: 8px 12px;
   background-color: #121212;
   border-bottom: none;
   display: flex;
-  align-items: center;
+  flex-direction: row; /* Put logo and content in a row */
+  align-items: flex-start; /* Align items to the top */
   position: relative;
-  height: 40px;
+  height: auto;
   width: 100%;
   box-sizing: border-box;
+  gap: 8px; /* Space between logo and content */
+}
+
+/* Content container for title and buttons */
+.header-content {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
-  justify-content: flex-start;
+  flex: 1;
+}
+
+/* Buttons container below title */
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Logo styling - Google Docs/Slides style */
+.header-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  margin: 0 4px 0 0;
+}
+
+.header-logo:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.header-logo-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: contain;
 }
 
 /* Styles for the back button, moved out of .control-group */
@@ -24,6 +62,8 @@
   flex-shrink: 1;
   z-index: 2;
   margin-right: 4px;
+  order: -3;
+  margin-left: 12px;
 }
 
 .header-bar-back-button:hover {
@@ -46,7 +86,7 @@
 
 /* Project Title Styling - Removed in portrait mode */
 .project-title {
-  text-align: center;
+  text-align: left;
   color: white;
   font-size: 1.2em;
   font-family: Arial, sans-serif;
@@ -54,18 +94,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   position: static;
-  left: 50%;
-  transform: translateX(-50%);
+  left: auto;
+  transform: none;
   z-index: 1;
-  max-width: calc(100% - 500px);
-  flex-grow: 1;
+  flex-basis: auto;
+  flex-grow: 0;
   flex-shrink: 1;
-  min-width: 150px;
-  margin: 0 10px;
+  margin: 0;
+  order: 0;
+  width: auto; /* Only take the space it needs */
 }
 
 .project-title input {
-  width: 100%;
+  width: auto;
+  min-width: 100px;
   background-color: transparent;
   color: inherit;
   font-weight: bold;
@@ -77,13 +119,14 @@
   margin: 0;
   box-sizing: border-box;
   outline: none;
-  text-align: center;
+  text-align: left;
 }
 
+/* Header Button Styling (for Theory, Style, Audio, View) */
 .header-button {
   padding: 4px 6px;
   margin: 0 2px;
-  background: transparent;
+  background: #333; /* Match the button style from the image */
   border: none;
   color: #fff;
   cursor: pointer;
@@ -93,7 +136,7 @@
 }
 
 .header-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #444; /* Darker shade on hover */
 }
 
 .header-button.active {
@@ -102,6 +145,15 @@
 
 .header-button.active:hover {
   background-color: rgba(40, 167, 69, 0.7);
+}
+
+/* Container for buttons in a row */
+.header-controls {
+  display: flex;
+  flex-direction: row; /* Put buttons in a row */
+  align-items: center; /* Center buttons vertically */
+  gap: 4px;
+  margin-left: 0; /* Remove margin to align with title */
 }
 
 .header-bar input[type="file"] {
@@ -185,6 +237,7 @@
 }
 
 .light-mode .header-button {
+  background: #e0e0e0; /* Light mode button background */
   color: #212529;
 }
 
@@ -240,9 +293,10 @@
 /* Header Controls */
 .header-controls {
   display: flex;
+  flex-direction: row; /* Put buttons in a row */
   align-items: center;
   gap: 4px;
-  margin-left: auto;
+  margin-left: 0;
   flex-shrink: 1;
 }
 
@@ -293,6 +347,7 @@
 @media (max-width: 766px) {
   .header-bar {
     padding: 4px;
+    gap: 4px; /* Reduce gap on mobile */
   }
   
   .header-controls {
@@ -470,12 +525,13 @@
     position: relative;
     left: auto;
     transform: none;
-    flex-grow: 1;
+    flex-grow: 0;
     flex-shrink: 1;
     min-width: 150px;
     margin: 0 4px;
-    order: 1;
-    max-width: calc(100% - 350px);
+    order: -1;
+    max-width: none;
+    flex-basis: auto;
   }
 
   .header-bar-back-button, .header-controls-left {
@@ -491,7 +547,7 @@
 /* Success Popup */
 .success-popup {
   position: fixed;
-  top: 20px;
+  top: 70px;
   left: 50%;
   transform: translateX(-50%);
   background-color: #4CAF50;
@@ -605,7 +661,6 @@
   position: relative;
   display: flex;
   align-items: center;
-  margin-right: 4px;
 }
 
 .theory-dropdown-menu {
@@ -695,9 +750,6 @@
 
 /* Project Title - ensure it doesn't get squeezed out by new view dropdown */
 .project-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   margin: 0;
   padding: 0 4px;
   color: white;
@@ -705,9 +757,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: center;
+  text-align: left;
   z-index: 1;
-  max-width: calc(100% - 600px);
+  width: 100%; /* Take full width */
 }
 
 /* Responsive Adjustments for View Dropdown */
@@ -716,7 +768,6 @@
     min-width: 80px;
     font-size: 1em;
     margin: 0 2px;
-    max-width: calc(100% - 300px);
   }
 
   .view-dropdown-menu {
@@ -747,7 +798,6 @@
   padding: 6px;
   z-index: 1000;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  display: none;
 }
 
 .control-popup.active {
@@ -794,6 +844,13 @@
   }
 
   .theory-section, .view-section, .style-section {
+    position: relative;
+    transform: none;
+    z-index: auto;
+    overflow: visible;
+  }
+
+  .audio-section {
     position: relative;
     transform: none;
     z-index: auto;
@@ -851,9 +908,30 @@
     max-width: calc(100vw - 8px);
   }
 
+  .audio-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: auto;
+    background-color: #2a2a2a;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 4px 0;
+    z-index: 1003;
+    min-width: 160px;
+    width: max-content;
+    box-shadow: 0 4px 11px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    max-width: calc(100vw - 8px);
+  }
+
   .theory-dropdown-menu.active,
   .view-dropdown-menu.active,
   .style-dropdown-menu.active {
+    display: block;
+  }
+
+  .audio-dropdown-menu.active {
     display: block;
   }
 
@@ -884,6 +962,42 @@
   transform: none;
 }
 
+/* Mobile-specific positioning for theory control popups */
+@media (max-width: 766px) and (pointer: coarse) {
+  .theory-section .control-popup,
+  .speed-popup,
+  .transpose-popup,
+  .time-signature-popup {
+    position: fixed !important;
+    top: 50px !important; /* Adjust for mobile header */
+    left: 10px !important;
+    right: 10px !important;
+    width: calc(100vw - 20px) !important;
+    max-width: 300px !important;
+    z-index: 100002 !important;
+    display: block !important;
+    background-color: #2a2a2a !important;
+    padding: 10px !important;
+  }
+}
+
+/* Touch devices (portrait or landscape): ensure popups are within viewport */
+@media (pointer: coarse) {
+  .theory-section .control-popup,
+  .speed-popup,
+  .transpose-popup,
+  .time-signature-popup {
+    position: fixed !important;
+    top: 50px !important; /* below header */
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100vw - 24px) !important;
+    max-width: 360px !important;
+    margin: 0 auto !important;
+    z-index: 100003 !important; /* above header/toolbars */
+  }
+}
+
 /* Dropdown Select */
 .dropdown-item .header-dropdown-select {
   background-color: #3a3a2a;
@@ -910,7 +1024,6 @@
 /* Style Section */
 .style-section {
   position: relative;
-  margin-right: 4px;
 }
 
 .style-dropdown-toggle {
@@ -977,7 +1090,6 @@
   border-radius: 2px;
   background: #444;
   outline: none;
-  margin: 0 6px;
 }
 
 .style-slider::-webkit-slider-thumb {
@@ -1091,10 +1203,46 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+/* Style for gradient toggle specifically */
+.toggle-item .switch {
+  margin-left: auto;
+}
+
+.toggle-item .switch .slider {
+  background-color: #4a4a4a;
+  border: 1px solid #666;
+}
+
+.toggle-item .switch input:checked + .slider {
+  background-color: #2196F3;
+  border-color: #1976D2;
+}
+
+.toggle-item .switch .slider:before {
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 .dropdown-separator {
   height: 1px;
   background-color: #444;
   margin: 6px 2px;
+}
+
+.dropdown-category-header {
+  font-weight: bold;
+  color: #888;
+  font-size: 12px;
+  padding: 8px 12px 4px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 4px;
+}
+
+.light-mode .dropdown-category-header {
+  color: #666;
+  border-bottom-color: #ddd;
 }
 
 .reset-styles-btn {
@@ -1127,91 +1275,84 @@ input:checked + .slider:before {
 }
 
 .light-mode .reset-styles-btn:hover {
-  background-color: #dcdcdc;
-  border-color: #bbb;
+  background-color: #e9ecef;
 }
 
-/* Minimal Mode Button */
-.minimal-mode-btn {
-  position: fixed;
-  top: 6px;
-  right: 6px;
-  z-index: 1004;
-  background-color: #333;
-  color: #fff;
-  border: none;
+/* Audio Section */
+.audio-section {
+  position: relative;
+}
+
+.audio-dropdown-toggle {
+  padding: 4px 6px;
+}
+
+.audio-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: auto;
+  background-color: #2a2a2a;
+  border: 1px solid #1a1a1a;
   border-radius: 4px;
+  box-shadow: 0 4px 11px rgba(0, 0, 0, 0.3);
+  z-index: 1002;
+  min-width: 200px;
   padding: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  flex-shrink: 1;
+  width: max-content;
+  box-sizing: border-box;
+  max-width: calc(100vw - 8px);
+  transform: translateX(0);
+  max-height: 300px;
+  overflow-y: auto;
 }
 
-.minimal-mode-btn:hover {
-  background-color: #444;
-  transform: translateY(-1px);
+.audio-dropdown-menu.active {
+  display: block;
 }
 
-.minimal-mode-btn.active {
-  background-color: #4CAF50;
-  color: white;
+.light-mode .audio-dropdown-menu {
+  background-color: #fff;
+  border-color: #ddd;
 }
 
-.minimal-mode-btn.active:hover {
-  background-color: #45a049;
+/* Save Section */
+.save-section {
+  position: relative;
 }
 
-/* Minimal Play Button */
-.minimal-play-btn {
-  position: fixed;
-  top: 6px;
-  right: 56px;
-  z-index: 1004;
-  background-color: #333;
-  color: #fff;
-  border: none;
+.save-dropdown-toggle {
+  padding: 4px 6px;
+}
+
+.save-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: auto;
+  background-color: #2a2a2a;
+  border: 1px solid #1a1a1a;
   border-radius: 4px;
+  box-shadow: 0 4px 11px rgba(0, 0, 0, 0.3);
+  z-index: 1002;
+  min-width: 160px;
   padding: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 1;
+  width: max-content;
+  box-sizing: border-box;
+  max-width: calc(100vw - 8px);
+  transform: translateX(0);
 }
 
-.minimal-play-btn:hover {
-  background-color: #444;
-  transform: translateY(-1px);
+.save-dropdown-menu.active {
+  display: block;
 }
 
-.minimal-play-btn.active {
-  background-color: #4CAF50;
-  color: white;
+.light-mode .save-dropdown-menu {
+  background-color: #fff;
+  border-color: #ddd;
 }
 
-.minimal-play-btn.active:hover {
-  background-color: #45a049;
-}
 
-.minimal-play-btn i {
-  font-size: 20px;
-}
-
-.light-mode .minimal-play-btn {
-  background-color: #f8f9fa;
-  color: #212529;
-  border: 1px solid #ced4da;
-}
-
-.light-mode .minimal-play-btn:hover {
-  background-color: #e2e6ea;
-}
 
 /* Minimal Mode Header Bar */
 .header-bar.minimal-mode {
@@ -1232,6 +1373,12 @@ input:checked + .slider:before {
     top: 2px;
     right: 2px;
     padding: 4px;
+    width: 26px;
+    height: 26px;
+    font-size: 10px;
+  }
+
+  .minimal-mode-btn i {
     font-size: 10px;
   }
 
@@ -1241,6 +1388,7 @@ input:checked + .slider:before {
     padding: 4px;
     width: 26px;
     height: 26px;
+    font-size: 10px;
   }
 
   .minimal-play-btn i {
@@ -1249,6 +1397,21 @@ input:checked + .slider:before {
 }
 
 @media (orientation: portrait) and (max-width: 766px) and (pointer: coarse) {
+  .minimal-mode-btn {
+    position: fixed !important;
+    top: 2px !important;
+    right: 2px !important;
+    z-index: 1004 !important;
+    padding: 4px !important;
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 10px !important;
+  }
+
+  .minimal-mode-btn i {
+    font-size: 10px !important;
+  }
+
   .minimal-play-btn {
     position: fixed !important;
     top: 2px !important;
@@ -1480,4 +1643,105 @@ input:checked + .slider:before {
   top: auto;
   right: auto;
   z-index: auto;
+}
+
+/* Big Save Button - Top Right */
+.big-save-btn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1005;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 120px;
+  text-align: center;
+}
+
+.big-save-btn.saved {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.big-save-btn.dirty {
+  background-color: #f44336;
+  color: white;
+}
+
+.big-save-btn.saving {
+  background-color: #2196F3;
+  color: white;
+}
+
+.big-save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.big-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Dropdown Search Styles */
+.dropdown-search-container {
+  padding: 8px 12px;
+  border-bottom: 1px solid #333;
+  background: #2a2a2a;
+}
+
+.light-mode .dropdown-search-container {
+  border-bottom-color: #ddd;
+  background: #f8f8f8;
+}
+
+.dropdown-search-input {
+  width: calc(100% - 24px);
+  padding: 6px 8px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.dropdown-search-input:focus {
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+}
+
+.light-mode .dropdown-search-input {
+  border-color: #ccc;
+  background: #fff;
+  color: #333;
+}
+
+.light-mode .dropdown-search-input:focus {
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+}
+
+.dropdown-search-input::placeholder {
+  color: #888;
+}
+
+.light-mode .dropdown-search-input::placeholder {
+  color: #999;
+}
+
+.dropdown-item.active {
+  color: #007acc;
+  font-weight: bold;
+}
+
+.dropdown-item.active i {
+  color: #007acc;
 }

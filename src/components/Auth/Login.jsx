@@ -5,10 +5,8 @@ import './Auth.css';
 const Login = () => {
   const { currentUser, loading } = useAuth();
   
-  // Use IP address for development on mobile devices
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const isLocalIP = window.location.hostname === '192.168.2.19';
-  const mainSiteUrl = (isDevelopment && isLocalIP) ? 'http://192.168.2.19:3000' : 'http://keycraft.org:3000';
+  // Use localhost for development, keycraft.org for production
+  const mainSiteUrl = process.env.REACT_APP_API_BASE_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'http://keycraft.org:3000');
 
   console.log('Login Component - Auth State:', { currentUser, loading });
 

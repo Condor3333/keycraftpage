@@ -41,7 +41,15 @@ const Toolbar = ({
   onBackgroundImageChange,
   hasSelection,
   setIsCursorInToolbar,
-  onApplyHandColorToSelection
+  onApplyHandColorToSelection,
+  // ADDED: Edit control props
+  onUndo,
+  onRedo,
+  onCopy,
+  onPaste,
+  onDelete,
+  canUndo,
+  canRedo
 }) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [activeHand, setActiveHand] = useState(null);
@@ -52,19 +60,40 @@ const Toolbar = ({
   const [showBgImageOptions, setShowBgImageOptions] = useState(false);
   const bgImageOptionsPopupRef = useRef(null);
 
+  // ADDED: Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                           (window.innerWidth <= 768 && 'ontouchstart' in window);
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleToolToggle = (toolSetterToActivate, currentToolState) => {
     const shouldActivateTool = !currentToolState;
-
-    // Deactivate all mutually exclusive tools
-    setIsSelectionToolActive(false);
-    setIsAddNoteToolActive(false);
-    setIsSpacerToolActive(false);
-    setIsTextToolActive(false);
-    setIsAddChordToolActive(false);
-    setIsRunToolActive(false);
+    
+    console.log('Tool toggle called:', { shouldActivateTool, currentToolState });
 
     if (shouldActivateTool) {
+      // Deactivate all other tools first
+      setIsSelectionToolActive(false);
+      setIsAddNoteToolActive(false);
+      setIsSpacerToolActive(false);
+      setIsTextToolActive(false);
+      setIsAddChordToolActive(false);
+      setIsRunToolActive(false);
+      
+      // Then activate the selected tool
       toolSetterToActivate(true);
+    } else {
+      // Just deactivate the current tool
+      toolSetterToActivate(false);
     }
   };
 
@@ -77,16 +106,16 @@ const Toolbar = ({
   ];
 
   const spacerDurations = [
-    { value: -4, label: '-Whole' },
-    { value: -2, label: '-1/2' },
-    { value: -1, label: '-1/4' },
-    { value: -0.5, label: '-1/8' },
-    { value: -0.25, label: '-1/16' },
-    { value: 0.25, label: '1/16' },
-    { value: 0.5, label: '1/8' },
-    { value: 1, label: '1/4' },
-    { value: 2, label: '1/2' },
-    { value: 4, label: 'Whole' }
+    { value: 1, label: 'Whole' },
+    { value: 0.5, label: '1/2' },
+    { value: 0.25, label: '1/4' },
+    { value: 0.125, label: '1/8' },
+    { value: 0.0625, label: '1/16' },
+    { value: -0.0625, label: '-1/16' },
+    { value: -0.125, label: '-1/8' },
+    { value: -0.25, label: '-1/4' },
+    { value: -0.5, label: '-1/2' },
+    { value: -1, label: '-Whole' }
   ];
 
   const handleImageUpload = async (e) => {
@@ -169,26 +198,7 @@ const Toolbar = ({
     setShowColorPicker(false);
   }, [tempColor, activeHand, customColors, onCustomColorsChange]);
 
-  const renderColorPicker = () => (
-    <>
-      <button
-        onClick={() => handleColorPickerOpen('left')}
-        className="toolbar-button color-button"
-        style={{ backgroundColor: customColors?.leftHand || '#ef4444' }}
-        title="Left Hand Color"
-      >
-        <i className="fas fa-hand-sparkles" style={{ transform: 'scaleX(-1)' }}></i>
-      </button>
-      <button
-        onClick={() => handleColorPickerOpen('right')}
-        className="toolbar-button color-button"
-        style={{ backgroundColor: customColors?.rightHand || '#4287f5' }}
-        title="Right Hand Color"
-      >
-        <i className="fas fa-hand-sparkles"></i>
-      </button>
-    </>
-  );
+
 
   // ADDED: Click handler for the main background image button
   const handleBgImageButtonClick = () => {
@@ -221,15 +231,10 @@ const Toolbar = ({
         onMouseEnter={() => setIsCursorInToolbar(true)}
         onMouseLeave={() => setIsCursorInToolbar(false)}
       >
-        {/* View Controls */}
-        <div className="toolbar-group">
-          {/* Note height tool was here */}
-        </div>
-
         {/* Creation Tools */}
         <div className="toolbar-group">
           <button onClick={() => handleToolToggle(setIsAddNoteToolActive, isAddNoteToolActive)} className={`toolbar-button ${isAddNoteToolActive ? 'active' : ''}`} title="Add Note Tool (A)">
-            Add Note
+            Note
           </button>
           {isAddNoteToolActive && (
             <select value={selectedDuration} onChange={(e) => setSelectedDuration(parseFloat(e.target.value))} className="toolbar-select" title="Note Duration">
@@ -240,7 +245,7 @@ const Toolbar = ({
           )}
           
           <button onClick={() => handleToolToggle(setIsAddChordToolActive, isAddChordToolActive)} className={`toolbar-button ${isAddChordToolActive ? 'active' : ''}`} title="Add Chord Tool (C)">
-            Add Chord
+            Chord
           </button>
           {isAddChordToolActive && (
             <>
@@ -258,7 +263,7 @@ const Toolbar = ({
           )}
           
           <button onClick={() => handleToolToggle(setIsRunToolActive, isRunToolActive)} className={`toolbar-button ${isRunToolActive ? 'active' : ''}`} title="Run Tool (R)">
-            Add Run
+            Run
           </button>
           {isRunToolActive && (
             <>
@@ -293,10 +298,12 @@ const Toolbar = ({
           )}
         </div>
 
+
+
         {/* Editing Tools */}
         <div className="toolbar-group">
           <button onClick={() => handleToolToggle(setIsSpacerToolActive, isSpacerToolActive)} className={`toolbar-button ${isSpacerToolActive ? 'active' : ''}`} title="Spacer Tool (P)">
-            Add Space
+            Space
           </button>
           {isSpacerToolActive && (
             <select value={spacerDuration} onChange={(e) => setSpacerDuration(parseFloat(e.target.value))} className="toolbar-select" title="Spacer Amount">
@@ -306,41 +313,106 @@ const Toolbar = ({
             </select>
           )}
 
-<button onClick={() => handleToolToggle(setIsTextToolActive, isTextToolActive)} className={`toolbar-button ${isTextToolActive ? 'active' : ''}`} title="Text Tool (T)">
-            Add Text
+          <button onClick={() => handleToolToggle(setIsTextToolActive, isTextToolActive)} className={`toolbar-button ${isTextToolActive ? 'active' : ''}`} title="Text Tool (T)">
+            Text
           </button>
           
-         
+          {/* Selection Tool - Mobile Only */}
+          {isMobile && (
+            <button onClick={() => handleToolToggle(setIsSelectionToolActive, isSelectionToolActive)} className={`toolbar-button ${isSelectionToolActive ? 'active' : ''}`} title="Selection Tool (S)">
+              Box Select
+            </button>
+          )}
         </div>
 
         {/* Style Tools */}
         <div className="toolbar-group">
-          <div className="background-image-button-container"> {/* Wrapped for relative positioning of popup */}
-            <button 
-              onClick={handleBgImageButtonClick} 
-              title={backgroundImage ? "Manage Background Image" : "Upload Background Image"}
-              className="toolbar-button"
-            >
-              <i className="fas fa-image"></i>
-            </button>
-            <input 
-              id="background-image-input" 
-              type="file" 
-              accept="image/*" 
-              onChange={handleImageUpload} 
-              style={{ display: 'none' }}
-            />
-          </div>
+          <button 
+            onClick={handleBgImageButtonClick} 
+            title={backgroundImage ? "Manage Background Image" : "Upload Background Image"}
+            className="toolbar-button"
+          >
+            Background
+          </button>
+          <input 
+            id="background-image-input" 
+            type="file" 
+            accept="image/*" 
+            onChange={handleImageUpload} 
+            style={{ display: 'none' }}
+          />
           
-          {/* Color pickers moved here */}
-          <div className="color-picker-container">
-            {renderColorPicker()}
-          </div>
+          <button
+            onClick={() => handleColorPickerOpen('left')}
+            className="toolbar-button"
+            title="Left Hand Color"
+          >
+            Left
+            <div 
+              className="color-indicator"
+              style={{ backgroundColor: customColors?.leftHand || '#ef4444' }}
+            ></div>
+          </button>
+
+          <button
+            onClick={() => handleColorPickerOpen('right')}
+            className="toolbar-button"
+            title="Right Hand Color"
+          >
+            Right
+            <div 
+              className="color-indicator"
+              style={{ backgroundColor: customColors?.rightHand || '#4287f5' }}
+            ></div>
+          </button>
         </div>
 
         <div className="toolbar-group">
           <label className="toolbar-section-label">Grid & View</label>
           {/* Scale Highlight UI Removed */}
+        </div>
+
+        {/* Edit Controls - Moved to Right Side */}
+        <div className="toolbar-group">
+          <button 
+            onClick={onUndo} 
+            disabled={!canUndo} 
+            className="toolbar-button"
+            title="Undo (Ctrl+Z)"
+          >
+            <i className="fas fa-undo"></i>
+          </button>
+          <button 
+            onClick={onRedo} 
+            disabled={!canRedo} 
+            className="toolbar-button"
+            title="Redo (Ctrl+Y)"
+          >
+            <i className="fas fa-redo"></i>
+          </button>
+          <button 
+            onClick={onCopy} 
+            disabled={!hasSelection} 
+            className="toolbar-button"
+            title="Copy (Ctrl+C)"
+          >
+            <i className="fas fa-copy"></i>
+          </button>
+          <button 
+            onClick={onPaste} 
+            className="toolbar-button"
+            title="Paste (Ctrl+V)"
+          >
+            <i className="fas fa-paste"></i>
+          </button>
+          <button 
+            onClick={onDelete} 
+            disabled={!hasSelection} 
+            className="toolbar-button"
+            title="Delete (Del)"
+          >
+            <i className="fas fa-trash"></i>
+          </button>
         </div>
       </div>
 

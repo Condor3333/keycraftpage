@@ -20,6 +20,7 @@ const Roll = ({
   midiData, 
   isPlaying, 
   bpm, // bpm is still used by Roll for grid/snap logic
+  durationScale = 1, // ADDED: Duration scale for note durations
   onUpdateMidiData,
   canUndo,
   canRedo,
@@ -96,6 +97,13 @@ const Roll = ({
   noteRoundness,
   noteBevel,
   noteOpacity,
+  noteGradient,
+  noteMetallic,
+  noteNeon,
+  notePulse,
+  noteGlass,
+  noteHolographic,
+  noteIce,
   // ADDED: Zoom prop
   zoomLevel = 1,
   // ADDED: Recording mode props
@@ -136,16 +144,15 @@ const Roll = ({
                            (window.innerWidth <= 768 && 'ontouchstart' in window);
       setIsMobile(isMobileDevice);
       
-      // Update keyboard height based on device and orientation
-      if (isMobileDevice && window.innerHeight > window.innerWidth) {
-        // Mobile portrait - adjust keyboard height based on zoom level
-        if (zoomLevel < 2) {
-          setKeyboardHeight(150);
-        } else {
-          setKeyboardHeight(100);
-        }
+      const isPortrait = window.innerHeight > window.innerWidth;
+
+      // Align JS height with CSS:
+      // - Portrait non-minimal uses 80px in CSS
+      // - Portrait minimal uses 100px in CSS
+      // - Landscape/desktop default 100px
+      if (isMobileDevice && isPortrait) {
+        setKeyboardHeight(isMinimalMode ? 100 : 145);
       } else {
-        // Desktop or mobile landscape - use larger keyboard
         setKeyboardHeight(100);
       }
     };
@@ -157,7 +164,7 @@ const Roll = ({
       window.removeEventListener('resize', checkMobileAndKeyboardHeight);
       window.removeEventListener('orientationchange', checkMobileAndKeyboardHeight);
     };
-  }, []);
+  }, [isMinimalMode, zoomLevel]);
 
   // Listen for note drag events to prevent selection conflicts
   useEffect(() => {
@@ -378,6 +385,9 @@ const Roll = ({
   const [isPastePreviewActive, setIsPastePreviewActive] = useState(false);
   const [pastePreviewNotes, setPastePreviewNotes] = useState([]);
   const [currentMousePosition, setCurrentMousePosition] = useState({ x: 0, y: 0 });
+
+  // NEW: Track scroll position at selection start to anchor origin across auto-scroll
+  const selectionStartScrollRef = useRef(0);
 
   // Helper function to determine what should be visible in recording mode
   const shouldShowElement = (elementType) => {
@@ -626,7 +636,7 @@ const Roll = ({
     // const DESIRED_VISUAL_OFFSET_PIXELS = calculatedDesiredOffset; // REMOVED
     
     // Get duration of a single beat in seconds
-    const snapOffset = 120; // This is a BPM value, used as a reference for grid timing calculations, consistent with Grid.jsx
+    const snapOffset = bpm || 120; // Use actual BPM from props, fallback to 120
     const beatDuration = 60 / snapOffset; // in seconds
     
     // Calculate the grid size based on the selected duration (as a fraction of a beat)
@@ -687,7 +697,7 @@ const Roll = ({
       const duration = visualHeight / (PIXELS_PER_SECOND * heightFactor); // Keep heightFactor for duration - this is height scaling
       
       // Get duration of a single beat in seconds (same as snapTimeToGrid)
-      const snapOffset = 120;
+      const snapOffset = bpm || 120; // Use actual BPM from props, fallback to 120
       const beatDuration = 60 / snapOffset;
       
       // Calculate the grid size based on the selected duration
@@ -779,14 +789,59 @@ const Roll = ({
       target: e.target
     });
     
-    // Check if touch is in toolbar area
+    // Block toolbar interactions
     if (e.target.closest('.toolbar')) {
       return;
     }
     
-    // Check if touch is on a note or if note dragging is active - if so, don't interfere with note dragging
+    // Don't interfere with note dragging
           if (e.target.closest('.note-component') || isNoteDragging) {
-      return; // Let the note component handle its own touch events
+      return;
+    }
+
+    // If Box Select tool is active, begin selection immediately and prevent page scroll
+    if (isSelectionToolActive) {
+      e.preventDefault();
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (rect) {
+        setIsSelecting(true);
+        // Store selection start in coordinates relative to container
+        const startXRel = touch.clientX - rect.left;
+        const startYRel = touch.clientY - rect.top;
+        setSelectionStart({ x: startXRel, y: startYRel });
+        setSelectionEnd({ x: startXRel, y: startYRel });
+        // Store scroll position at selection start to keep origin fixed while auto-scrolling
+        selectionStartScrollRef.current = scrollPositionRef.current;
+        setCurrentGroupId(uuidv4());
+      }
+      return;
+    }
+    
+    // Handle run tool touch start
+    if (isRunToolActive && !isPlaying) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      const containerHeight = containerRef.current.clientHeight;
+      const keyboardHeight = KEYBOARD_HEIGHT;
+      const headerHeight = 40; // Height of the header bar
+
+      // Don't allow clicking in keyboard area, toolbar, or header
+      if (y > containerHeight - keyboardHeight || y < TOOLBAR_HEIGHT + headerHeight) {
+        return;
+      }
+
+      const containerWidth = containerRef.current.clientWidth;
+      const keyWidth = containerWidth / (noteRange.max - noteRange.min + 1);
+      const noteIndex = Math.floor(x / keyWidth);
+      const startMidiNote = noteIndex + noteRange.min;
+
+      const clickTime = (containerHeight - keyboardHeight - y) / PIXELS_PER_SECOND;
+      const startTime = scrollPositionRef.current + clickTime;
+
+      setRunStartNote({ midi: startMidiNote, time: startTime });
+      setIsRunning(true);
+      return;
     }
     
     // Don't prevent default here - let other handlers decide
@@ -796,77 +851,64 @@ const Roll = ({
     if (!isMobile || !touchStartData || !isTouch) return;
     
     const touch = e.touches[0];
-    const currentTime = Date.now();
-    const deltaTime = currentTime - touchStartData.time;
+    const nowTime = Date.now();
+    const deltaTime = nowTime - touchStartData.time;
     const deltaY = touch.clientY - touchStartData.y;
     const deltaX = touch.clientX - touchStartData.x;
     
-    // Check if this is primarily a vertical scroll (timeline) or horizontal (selection)
-    const isVerticalScroll = Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10;
-    const isHorizontalScroll = Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10;
-    
-    // Handle toolbar area differently
+    // Block toolbar interactions
     if (e.target.closest('.toolbar')) {
-      return; // Allow default behavior for toolbar
+      return;
     }
     
     // Don't interfere if touch started on a note component or if a note is being dragged
           if (touchStartData.target.closest('.note-component') || isNoteDragging) {
-      return; // Let note component handle its own drag
+      return;
     }
     
-    if (isVerticalScroll && !isPlaying) {
-      // Prevent default scroll for timeline navigation
+    // PRIORITY: When Box Select tool is active, treat movement as selection (not scroll)
+    if (isSelectionToolActive) {
       e.preventDefault();
-      
-      // Calculate scroll velocity for momentum
-      const velocity = deltaY / Math.max(deltaTime, 1);
-      setTouchScrollVelocity(velocity);
-      
-      // Timeline scrolling - map touch movement to time
-      const scrollSensitivity = 0.01;
-      const timeChange = -deltaY * scrollSensitivity;
-      const newPosition = Math.max(0, Math.min(touchStartData.scrollPosition + timeChange, songDuration));
-      
-      scrollPositionRef.current = newPosition;
-      setSongPosition(newPosition);
-      Tone.Transport.seconds = newPosition;
-      onScrollPositionChange?.(newPosition);
-    } else if (isHorizontalScroll || Math.abs(deltaX) > 20) {
-      // Potential selection box creation - but only if no note is being dragged
-      if (!e.target.closest('.note-component, .text-annotation-div') && 
-          !isAddNoteToolActive && !isAddChordToolActive && !isRunToolActive && 
-          !isTextToolActive && !isSpacerToolActive && !isNoteDragging) {
-        
-        e.preventDefault();
-        
-        // Create selection box
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      // Start selection if not started yet
         if (!isSelecting) {
           setIsSelecting(true);
-          setSelectionStart({ x: touchStartData.x, y: touchStartData.y });
+        const startXRel = touchStartData.x - rect.left;
+        const startYRel = touchStartData.y - rect.top;
+        setSelectionStart({ x: startXRel, y: startYRel });
           setCurrentGroupId(uuidv4());
-        }
-        
-        setSelectionEnd({ x: touch.clientX, y: touch.clientY });
-        
-        const rect = containerRef.current?.getBoundingClientRect();
-        if (rect) {
-          const left = Math.min(touchStartData.x - rect.left, touch.clientX - rect.left);
-          const width = Math.abs(touch.clientX - touchStartData.x);
-          const top = Math.min(touchStartData.y - rect.top, touch.clientY - rect.top);
-          const height = Math.abs(touch.clientY - touchStartData.y);
+        selectionStartScrollRef.current = scrollPositionRef.current;
+      }
+
+      const containerHeight = containerRef.current.clientHeight;
+      const keyboardHeight = KEYBOARD_HEIGHT;
+      const headerHeight = 40;
+
+      // Current position relative to container with clamping
+      const clampedClientY = Math.max(rect.top + TOOLBAR_HEIGHT + headerHeight, Math.min(touch.clientY, rect.bottom - keyboardHeight));
+      const xRel = touch.clientX - rect.left;
+      const yRel = clampedClientY - rect.top;
+
+      setSelectionEnd({ x: xRel, y: yRel });
+
+      // Keep origin anchored to musical content by compensating for auto-scroll
+      const scrolledY = (scrollPositionRef.current - selectionStartScrollRef.current) * PIXELS_PER_SECOND;
+      const adjustedStartY = (selectionStart.y ?? 0) + scrolledY;
+
+      const left = Math.min(selectionStart.x ?? xRel, xRel);
+      const width = Math.abs(xRel - (selectionStart.x ?? xRel));
+      const top = Math.min(adjustedStartY, yRel);
+      const height = Math.abs(yRel - adjustedStartY);
           
           setSelectionBox({ left, top, width, height });
           
-          // Apply selection logic (similar to mouse selection)
-          const containerHeight = containerRef.current.clientHeight;
-          const keyboardHeight = KEYBOARD_HEIGHT;
+      // Apply selection logic
           const containerWidth = containerRef.current.clientWidth;
           const keyWidth = containerWidth / (noteRange.max - noteRange.min + 1);
-          
           const startNote = Math.floor(left / keyWidth) + noteRange.min;
           const endNote = Math.ceil((left + width) / keyWidth) + noteRange.min;
-          
           const startTime = (containerHeight - keyboardHeight - (top + height)) / PIXELS_PER_SECOND + scrollPositionRef.current;
           const endTime = (containerHeight - keyboardHeight - top) / PIXELS_PER_SECOND + scrollPositionRef.current;
 
@@ -891,16 +933,101 @@ const Roll = ({
           newSelectedNotes.forEach(note => {
             updatedGroups.set(note.id, currentGroupId);
           });
-          
           onNoteGroupsChange(updatedGroups);
-
           if (colorNeedsUpdate) {
             const newColors = new Map(groupColors);
             newColors.set(currentGroupId, getColor());
             onGroupColorsChange(newColors);
           }
+
+      // Auto-scroll when selection is near top or bottom on mobile
+      const yRelative = yRel; // already relative to container
+      const isInTopScrollZone = yRelative < (SCROLL_MARGINS.top + TOOLBAR_HEIGHT + headerHeight);
+      const isInBottomScrollZone = yRelative > containerHeight - SCROLL_MARGINS.bottom - keyboardHeight;
+
+      if (!isInTopScrollZone && !isInBottomScrollZone && scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
+      }
+
+      if (isInTopScrollZone) {
+        if (!scrollIntervalRef.current) {
+          scrollIntervalRef.current = setInterval(() => {
+            const newPosition = Math.min(
+              songDuration,
+              scrollPositionRef.current + (SCROLL_SPEED / PIXELS_PER_SECOND)
+            );
+            scrollPositionRef.current = newPosition;
+            setSongPosition(newPosition);
+          }, 16);
+        }
+      } else if (isInBottomScrollZone) {
+        if (!scrollIntervalRef.current) {
+          scrollIntervalRef.current = setInterval(() => {
+            const newPosition = Math.max(
+              0,
+              scrollPositionRef.current - (SCROLL_SPEED / PIXELS_PER_SECOND)
+            );
+            scrollPositionRef.current = newPosition;
+            setSongPosition(newPosition);
+          }, 16);
         }
       }
+
+      return;
+    }
+
+    const isVerticalScroll = Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10;
+    const isHorizontalScroll = Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10;
+
+    if (isRunning && isRunToolActive && runStartNote) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      const containerHeight = containerRef.current.clientHeight;
+      const keyboardHeight = KEYBOARD_HEIGHT;
+      const containerWidth = containerRef.current.clientWidth;
+      const keyWidth = containerWidth / (noteRange.max - noteRange.min + 1);
+      const headerHeight = 40; // Height of the header bar
+
+      // Restrict y position to roll area only, accounting for both toolbar and header
+      const clampedY = Math.max(TOOLBAR_HEIGHT + headerHeight, Math.min(y, containerHeight - keyboardHeight));
+
+      const noteIndex = Math.floor(x / keyWidth);
+      const currentMidiNote = noteIndex + noteRange.min;
+
+      const clickTime = (containerHeight - keyboardHeight - clampedY) / PIXELS_PER_SECOND;
+      const currentTime = scrollPositionRef.current + clickTime;
+
+      const previewNotes = createRunNotes(
+        runStartNote.midi,
+        currentMidiNote,
+        runStartNote.time,
+        currentTime
+      );
+
+      setRunPreviewNotes(previewNotes);
+      return;
+    }
+
+    if (isVerticalScroll && !isPlaying) {
+      // Prevent default scroll for timeline navigation
+      e.preventDefault();
+      const velocity = deltaY / Math.max(deltaTime, 1);
+      setTouchScrollVelocity(velocity);
+      const scrollSensitivity = 0.01;
+      const timeChange = deltaY * scrollSensitivity;
+      const newPosition = Math.max(0, Math.min(touchStartData.scrollPosition + timeChange, songDuration));
+      scrollPositionRef.current = newPosition;
+      setSongPosition(newPosition);
+      Tone.Transport.seconds = newPosition;
+      onScrollPositionChange?.(newPosition);
+      return;
+    }
+
+    if (isHorizontalScroll || Math.abs(deltaX) > 20) {
+      // Horizontal gesture defaults to nothing unless a tool handles it
+      return;
     }
   };
 
@@ -909,6 +1036,43 @@ const Roll = ({
     
     const currentTime = Date.now();
     const touchDuration = currentTime - lastTouchTime;
+
+    // If we were selecting, finish selection without letting the page scroll
+    if (isSelecting && isSelectionToolActive) {
+      e.preventDefault();
+    }
+    
+    // Handle run tool touch end
+    if (isRunning && isRunToolActive && runStartNote && runPreviewNotes.length > 0) {
+      // ADDED: Note limit check for Run Tool
+      const currentNoteCount = midiData?.tracks?.[0]?.notes?.length || 0;
+      if (currentNoteCount + runPreviewNotes.length > NOTE_LIMIT) {
+        alert(`Adding these notes would exceed the project note limit of ${NOTE_LIMIT.toLocaleString()}.`);
+        // Reset run tool state without adding notes
+        setRunStartNote(null);
+        setRunPreviewNotes([]);
+        setIsRunning(false);
+        return;
+      }
+
+      // Add the run notes to the MIDI data
+      const currentData = JSON.parse(JSON.stringify(midiData || { tracks: [{ notes: [] }] }));
+      const newTracks = [...(currentData.tracks || [])];
+      if (newTracks.length === 0) {
+        newTracks.push({ notes: [] });
+      }
+
+      newTracks[0].notes = [...newTracks[0].notes, ...runPreviewNotes]
+        .sort((a, b) => a.time - b.time);
+
+      onUpdateMidiData({ ...currentData, tracks: newTracks });
+
+      // Reset run tool state
+      setRunStartNote(null);
+      setRunPreviewNotes([]);
+      setIsRunning(false);
+      return;
+    }
     
     // Handle momentum scrolling for timeline
     if (touchScrollVelocity && Math.abs(touchScrollVelocity) > 0.1 && touchDuration < 300) {
@@ -920,7 +1084,7 @@ const Roll = ({
           return;
         }
         
-        const timeChange = -momentum * 16; // 16ms frame time
+        const timeChange = momentum * 16; // Flipped direction for mobile momentum
         const newPosition = Math.max(0, Math.min(scrollPositionRef.current + timeChange * 0.01, songDuration));
         
         scrollPositionRef.current = newPosition;
@@ -944,7 +1108,30 @@ const Roll = ({
     setIsTouch(false);
     setTouchStartData(null);
     setTouchScrollVelocity(0);
+
+    // Clear auto-scroll interval when finishing selection
+    if (scrollIntervalRef.current) {
+      clearInterval(scrollIntervalRef.current);
+      scrollIntervalRef.current = null;
+    }
   };
+
+  // Add window-level touch listeners while selecting or running so drags leaving the container still work
+  useEffect(() => {
+    if (!isMobile) return;
+    if (!(isSelecting || (isRunToolActive && isRunning))) return;
+
+    const move = (e) => handleTouchMove(e);
+    const end = (e) => handleTouchEnd(e);
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('touchend', end, { passive: true });
+    window.addEventListener('touchcancel', end, { passive: true });
+    return () => {
+      window.removeEventListener('touchmove', move);
+      window.removeEventListener('touchend', end);
+      window.removeEventListener('touchcancel', end);
+    };
+  }, [isMobile, isSelecting, isRunToolActive, isRunning, handleTouchMove, handleTouchEnd]);
 
   // Update the useEffect for wheel and touch events
   useEffect(() => {
@@ -2108,6 +2295,17 @@ const Roll = ({
           setIsAddChordToolActive(false);
         }
 
+        // Add shortcut for Selection tool
+        if (e.key.toLowerCase() === 's' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          setIsSelectionToolActive(!isSelectionToolActive);
+          setIsRunToolActive(false);
+          setIsAddNoteToolActive(false);
+          setIsSpacerToolActive(false);
+          setIsTextToolActive(false);
+          setIsAddChordToolActive(false);
+        }
+
         // Add arrow key shortcuts for moving selected notes
         if (noteGroups.size > 0 && [
           'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'
@@ -2651,18 +2849,36 @@ const Roll = ({
     const unsnappedTime = scrollPositionRef.current + clickTime;
     const insertTime = isSnapToGridActive ? snapTimeToGrid(unsnappedTime) : unsnappedTime;
 
+    console.log('Spacer tool debug:', { spacerDuration, insertTime });
+
     // Create new tracks with shifted notes
     const newTracks = midiData.tracks.map(track => ({
       ...track,
       notes: track.notes.map(note => {
-        // Only shift notes that are after the click position
-        if (note.time >= insertTime) {
-          const shiftAmount = DEFAULT_DURATIONS[spacerDuration] || DEFAULT_DURATIONS[1]; // Use selected spacer duration value, fallback to 1/4 note
-          const newTime = note.time + shiftAmount;
-          return {
-            ...note,
-            time: isSnapToGridActive ? snapTimeToGrid(newTime) : newTime
-          };
+        // For negative spacer values, shift notes AFTER the click position backward (move them down/sooner)
+        // For positive spacer values, shift notes AFTER the click position forward (move them up/later)
+        if (spacerDuration < 0) {
+          // Negative spacer: shift notes after click position backward (move them down/sooner)
+          if (note.time >= insertTime) {
+            const shiftAmount = Math.abs(spacerDuration); // Use the actual spacer duration value
+            const newTime = Math.max(0, note.time - shiftAmount); // Don't go below 0
+            console.log('Negative spacer:', { noteTime: note.time, shiftAmount, newTime });
+            return {
+              ...note,
+              time: isSnapToGridActive ? snapTimeToGrid(newTime) : newTime
+            };
+          }
+        } else {
+          // Positive spacer: shift notes after click position forward (move them up/later)
+          if (note.time >= insertTime) {
+            const shiftAmount = spacerDuration; // Use the actual spacer duration value
+            const newTime = note.time + shiftAmount;
+            console.log('Positive spacer:', { noteTime: note.time, shiftAmount, newTime });
+            return {
+              ...note,
+              time: isSnapToGridActive ? snapTimeToGrid(newTime) : newTime
+            };
+          }
         }
         return note;
       })
@@ -2802,7 +3018,7 @@ const Roll = ({
     // Apply grid snapping to duration if snap to grid is active
     if (isSnapToGridActive) {
       // Get duration of a single beat in seconds
-      const snapOffset = 120; // This is a BPM value, used as a reference for grid timing calculations
+      const snapOffset = bpm || 120; // Use actual BPM from props, fallback to 120
       const beatDuration = 60 / snapOffset; // in seconds
       
       // Calculate the grid size based on the selected duration (as a fraction of a beat)
@@ -3612,7 +3828,7 @@ const Roll = ({
       ref={containerRef} 
       style={{ 
         width: '100%', 
-        height: '600px',
+        height: isMinimalMode ? '100%' : '600px',
         overflow: 'hidden',
         position: 'relative',
         touchAction: 'none',
@@ -3626,7 +3842,7 @@ const Roll = ({
                isPastePreviewActive ? 'copy' :
                'default'
       }}
-      className={isRecordingMode ? 'recording-mode' : ''}
+      className={`${isRecordingMode ? 'recording-mode' : ''} ${isMinimalMode ? 'minimal-mode' : ''}`.trim()}
       onMouseDown={handleMouseDown}
       onContextMenu={handleRollContextMenu} // Attach context menu handler
       onMouseMove={handleContainerMouseMove}
@@ -3694,6 +3910,14 @@ const Roll = ({
           // Pass Theory and View related props
           playbackSpeed={playbackSpeed}
           onApplyHandColorToSelection={handleApplyHandColorToSelection} // Pass down the new handler
+          // ADDED: Edit control props
+          onUndo={onUndo}
+          onRedo={onRedo}
+          onCopy={onCopy}
+          onPaste={onPaste}
+          onDelete={onDelete}
+          canUndo={canUndo}
+          canRedo={canRedo}
         />
       )}
       
@@ -3727,6 +3951,7 @@ const Roll = ({
         setSelectedScale={setSelectedScale}
         selectedKey={selectedKey}
         setSelectedKey={setSelectedKey}
+        bpm={bpm}
       />
       )}
 
@@ -4020,6 +4245,13 @@ const Roll = ({
                 noteRoundness={noteRoundness}
                 noteBevel={noteBevel}
                 noteOpacity={noteOpacity}
+                noteGradient={noteGradient}
+                noteMetallic={noteMetallic}
+                noteNeon={noteNeon}
+                notePulse={notePulse}
+                noteGlass={noteGlass}
+                noteHolographic={noteHolographic}
+                noteIce={noteIce}
                 // Add grid snapping props
                 isSnapToGridActive={isSnapToGridActive}
                 selectedDuration={selectedDuration}

@@ -119,9 +119,9 @@ const KeyboardScene = ({
   const numWhiteKeys = whiteKeys.length;
   const keyWidth = totalWidth / numWhiteKeys;
 
-  // Get color for a key based on its state
-  const getKeyColor = (midi, isBlackKey) => {
-    const defaultColor = isBlackKey ? '#1a1a1a' : '#ffffff';
+      // Get color for a key based on its state
+    const getKeyColor = (midi, isBlackKey) => {
+      const defaultColor = isBlackKey ? '#1a1a1a' : '#f8f8f8';
     
     // Check for held notes first - use exact MIDI note values
     if (heldNotes.has(midi)) {
@@ -155,10 +155,10 @@ const KeyboardScene = ({
 
   return (
     <>
-      <ambientLight intensity={0.8} />
+      <ambientLight intensity={2.0} />
       <directionalLight 
-        position={[10, 10, 10]} 
-        intensity={2.5}
+        position={[0, 10, 0]} 
+        intensity={0}
       />
 
       {whiteKeys.map((midi, idx) => (
@@ -176,8 +176,8 @@ const KeyboardScene = ({
           <boxGeometry args={[keyWidth * 0.98, whiteKeyHeight * 0.98, 0.25]} />
           <meshStandardMaterial 
             color={getKeyColor(midi, false)}
-            roughness={0.1}
-            metalness={0.2}
+            roughness={0.0}
+            metalness={0.0}
           />
         </mesh>
       ))}
@@ -196,8 +196,8 @@ const KeyboardScene = ({
           <boxGeometry args={[keyWidth * 0.6, blackKeyHeight, 0.35]} />
           <meshStandardMaterial 
             color={getKeyColor(midi, true)}
-            roughness={0.1}
-            metalness={0.2}
+            roughness={0.0}
+            metalness={0.0}
           />
         </mesh>
       ))}

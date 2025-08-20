@@ -31,7 +31,8 @@ const ContextMenu = ({
   noteCount,
   transpositionTargets,
   currentTransposeTargetId,
-  onTranspose
+  onTranspose,
+  bpm
 }) => {
   const menuRef = useRef(null);
 
@@ -185,9 +186,7 @@ const ContextMenu = ({
           ))}
         </select>
       </div>
-      <div className="context-menu-item-static">
-        <span>Tempo: {Math.round(playbackSpeed * 120)} BPM</span>
-      </div>
+
       <div className="context-menu-item-static">
         <span>{totalBars} bars • {noteCount || 0} notes</span>
       </div>

@@ -1,3 +1,26 @@
+/* KeyCraft Logo - Top Left */
+.project-list-logo {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.project-list-logo:hover {
+  transform: scale(1.05);
+}
+
+.project-list-logo-img {
+  width: 68px;
+  height: 68px;
+  border-radius: 8px;
+  margin-top: -10px;
+  object-fit: contain;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
 .project-list {
   padding: 20px;
   max-width: 1200px;
@@ -24,6 +47,48 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  position: relative; /* For absolute positioning of premium label */
+}
+
+/* Premium Label for Tier 2 Users */
+.premium-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+}
+
+.premium-crown {
+  font-size: 20px;
+  color: #ffd700;
+  margin-bottom: 2px;
+}
+
+.premium-text-stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.premium-text-stacked span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffd700;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Light mode styles for premium label */
+.light-mode .premium-crown,
+.light-mode .premium-text-stacked span {
+  color: #ff6b35;
 }
 
 .header-left h1 {
@@ -86,6 +151,163 @@
 .project-actions .button:hover {
   background-color: #303030;
   border-color: #454545;
+}
+
+/* Premium feature styles */
+.project-actions .button.premium-feature,
+.project-actions button.premium-feature {
+  background-color: #1a1a1a;
+  color: #666;
+  border-color: #333;
+  cursor: not-allowed;
+  opacity: 0.6;
+  position: relative;
+}
+
+.project-actions .button.premium-feature:hover,
+.project-actions button.premium-feature:hover {
+  background-color: #1a1a1a;
+  border-color: #333;
+  transform: none;
+}
+
+.premium-icon {
+  margin-left: 6px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Premium locked project cards */
+.project-card.premium-locked {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.project-card.premium-locked:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-color: #2c2c2c;
+}
+
+.project-card .premium-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3); /* Reduced opacity to allow clicking through */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 8px 8px 0 0; /* Match the project card top border radius */
+  pointer-events: none; /* Allow clicking through the overlay */
+}
+
+.project-card .premium-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #ffd700;
+}
+
+.project-card .premium-icon-large {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.project-card .premium-text {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Mobile premium overlay - covers entire card */
+.mobile-premium-overlay {
+  display: none; /* Hidden by default on desktop */
+}
+
+/* Premium button container and tooltip */
+.premium-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.premium-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  z-index: 1000;
+}
+
+.tooltip-content {
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid #444;
+  min-width: 250px;
+  text-align: center;
+}
+
+.tooltip-content::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #2c2c2c;
+}
+
+.tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tooltip-icon {
+  font-size: 16px;
+}
+
+.tooltip-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #ffd700;
+}
+
+.tooltip-content p {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #ccc;
+}
+
+.tooltip-upgrade-btn {
+  background-color: #ffd700;
+  color: #333;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tooltip-upgrade-btn:hover {
+  background-color: #ffed4e;
 }
 
 .controls-bar {
@@ -176,7 +398,7 @@
 
 .project-thumbnail-placeholder {
   width: 100%;
-  height: 150px;
+  height: 180px;
   background-color: #333;
   display: flex;
   align-items: center;
@@ -185,6 +407,7 @@
   font-size: 0.9em;
   cursor: pointer;
   overflow: hidden;
+  position: relative; /* Add this to contain the overlay */
 }
 
 .project-thumbnail-img {
@@ -278,6 +501,10 @@
   cursor: pointer;
   background-color: #222222;
   border: 2px dashed #444444;
+  position: relative;
+  overflow: hidden;
+  height: 300px;
+  width: 330px;
 }
 
 .new-project-card:hover {
@@ -303,6 +530,180 @@
 .new-project-card-content span {
   font-size: 15px;
   font-weight: 500;
+}
+
+.new-project-card .dropdown-arrow {
+  display: none;
+}
+
+.new-project-card:hover .dropdown-arrow {
+  opacity: 1;
+}
+
+/* New project options that appear within the card */
+.new-project-options {
+  width: 100%;
+  height: 100%;
+  background: #1e1e1e;
+  border-radius: 8px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.new-project-options-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2c2c2c;
+  background: #252525;
+  border-radius: 8px 8px 0 0;
+}
+
+.new-project-options-header span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.close-options-btn {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.close-options-btn:hover {
+  color: #ffffff;
+  background-color: #333333;
+}
+
+.new-project-options-content {
+  flex: 1;
+  padding: 8px 0;
+}
+
+.options-section {
+  margin-bottom: 16px;
+}
+
+.options-section-header {
+  padding: 8px 16px 4px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a0a0a0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.option-button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.option-button:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.option-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.option-button:disabled:hover {
+  background: transparent;
+  color: #e0e0e0;
+}
+
+.new-project-dropdown .midi-dropdown-section {
+  padding: 8px 0;
+}
+
+.new-project-dropdown .midi-dropdown-header {
+  padding: 8px 16px 4px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a0a0a0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.new-project-dropdown .midi-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.new-project-dropdown .midi-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.new-project-dropdown .midi-dropdown-item:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* New project premium notice */
+.new-project-premium-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.new-project-premium-notice .premium-icon {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.new-project-premium-notice .premium-text {
+  font-size: 11px;
+  color: #ffd700;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Light mode for new project premium notice */
+.light-mode .new-project-premium-notice .premium-text {
+  color: #ff6b35;
 }
 
 .project-header h1 {
@@ -349,223 +750,79 @@
   border-color: #0056b3;
 }
 
-.light-mode .controls-bar {
-  background-color: #e9ecef;
-  border-radius: 6px;
-}
-
-.light-mode .control-group label {
-  color: #495057;
-}
-
-.light-mode .control-select {
-  background-color: #fff;
-  color: #495057;
-  border: 1px solid #ced4da;
-}
-
-.light-mode .search-bar input {
-  background-color: #fff;
-  color: #495057;
-  border: 1px solid #ced4da;
-}
-
-.light-mode .search-bar input::placeholder {
-  color: #6c757d;
-}
-
-.light-mode .search-bar input:focus {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.light-mode .project-card {
-  background-color: #ffffff; /* Already defined in App.css, ensuring consistency */
-  border: 1px solid #dee2e6;
-}
-
-.light-mode .project-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  border-color: #ced4da;
-}
-
-.light-mode .project-thumbnail-placeholder {
-  background-color: #e9ecef;
-  color: #adb5bd;
-}
-
-.light-mode .project-info h3 {
-  color: #212529; /* Darker for better readability */
-}
-
-.light-mode .project-info h3:hover {
-  color: #007bff;
-}
-
-.light-mode .project-name-input {
-  background-color: #fff;
-  color: #495057;
-  border: 1px solid #ced4da;
-}
-
-.light-mode .project-dates {
-  color: #6c757d;
-}
-
-.light-mode .control-btn {
-  color: #6c757d;
-}
-
-.light-mode .control-btn:hover {
-  color: #212529;
-  background-color: #e9ecef;
-}
-
-.light-mode .edit-name-btn:hover {
-  color: #007bff;
-}
-
-.light-mode .delete-btn:hover {
-  color: #dc3545;
-}
-
-.light-mode .duplicate-btn:hover {
-  color: #28a745;
-}
-
-.light-mode .new-project-card {
+.light-mode .project-actions .button.premium-feature,
+.light-mode .project-actions button.premium-feature {
   background-color: #f8f9fa;
-  border: 2px dashed #ced4da;
+  color: #adb5bd;
+  border-color: #dee2e6;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
-.light-mode .new-project-card:hover {
-  background-color: #e9ecef;
-  border-color: #adb5bd;
+.light-mode .project-actions .button.premium-feature:hover,
+.light-mode .project-actions button.premium-feature:hover {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  transform: none;
 }
 
-.light-mode .new-project-card-content {
-  color: #6c757d;
-}
-
-/* Add this new class */
-.project-actions-and-settings {
-  display: flex;
-  align-items: center; /* Vertically align items in the middle */
-  gap: 10px; /* Space between the actions block and the settings gear */
-}
-
-/* ADDED: Simple Modal for Deleting Project */
-.simple-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000; /* Ensure it's above other content */
-}
-
-.simple-modal {
-  background-color: #2c2c2c; /* Dark theme background */
-  color: #e0e0e0; /* Dark theme text */
-  padding: 25px 30px;
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  text-align: center;
-  min-width: 250px;
-}
-
-.simple-modal h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-/* Spinner (re-use existing if available, or define a simple one) */
-.simple-modal .spinner {
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-left-color: #ffffff;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto;
-}
-
-/* Light mode adjustments for simple modal */
-.light-mode .simple-modal {
+/* Light mode tooltip styles */
+.light-mode .tooltip-content {
   background-color: #ffffff;
   color: #333333;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  border: 1px solid #dee2e6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.light-mode .simple-modal .spinner {
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #007bff;
+.light-mode .tooltip-content::before {
+  border-bottom-color: #ffffff;
 }
 
-
-/* Ensure spinner animation is defined if not already present elsewhere */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.light-mode .tooltip-title {
+  color: #ff6b35;
 }
 
-/* Progress Bar Styles for Audio Transcription */
-.progress-container {
-  margin-top: 20px;
-  width: 100%;
+.light-mode .tooltip-content p {
+  color: #666666;
 }
 
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background-color: #333;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 10px;
+.light-mode .tooltip-upgrade-btn {
+  background-color: #007bff;
+  color: #ffffff;
 }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #007bff, #0056b3);
-  border-radius: 4px;
-  width: 0%;
-  animation: progressAnimation 480s ease-out forwards; /* 8 minutes max */
-  transition: width 0.3s ease;
+.light-mode .tooltip-upgrade-btn:hover {
+  background-color: #0056b3;
 }
 
-.progress-text {
-  text-align: center;
-  font-size: 14px;
-  color: #a0a0a0;
-  margin-top: 8px;
+/* Light mode premium overlay styles */
+.light-mode .project-card.premium-locked {
+  opacity: 0.6;
 }
 
-@keyframes progressAnimation {
-  0% { width: 0%; }
-  10% { width: 15%; }
-  25% { width: 35%; }
-  50% { width: 60%; }
-  75% { width: 80%; }
-  90% { width: 95%; }
-  100% { width: 100%; }
+.light-mode .project-card .premium-overlay {
+  background-color: rgba(255, 255, 255, 0.4); /* Reduced opacity to allow clicking through */
 }
 
-/* Light mode progress bar */
-.light-mode .progress-bar {
-  background-color: #e0e0e0;
+.light-mode .project-card .premium-overlay-content {
+  color: #ff6b35;
 }
 
-.light-mode .progress-text {
-  color: #666;
-} 
+.light-mode .project-card .premium-text {
+  color: #ff6b35;
+}
+
+.light-mode .mobile-premium-overlay {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.light-mode .mobile-premium-overlay .premium-overlay-content {
+  color: #ff6b35;
+}
+
+.light-mode .mobile-premium-overlay .premium-text {
+  color: #ff6b35;
+}
 
 /* Mobile: Vertical list, titles only, no thumbnails */
 @media (max-width: 600px) {
@@ -582,6 +839,7 @@
     border-radius: 6px;
     border: 1px solid #2c2c2c;
     background: #1e1e1e;
+    position: relative; /* Add this for mobile premium overlay */
   }
   .project-thumbnail-placeholder {
     display: none !important;
@@ -622,4 +880,503 @@
     display: flex;
     align-items: center;
   }
+  
+  /* Mobile premium overlay - covers entire card */
+  .project-card.premium-locked .premium-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 6px;
+  }
+  
+  .project-card.premium-locked .premium-overlay-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ffd700;
+  }
+  
+  .project-card.premium-locked .premium-icon-large {
+    font-size: 16px;
+    margin: 0;
+  }
+  
+  .project-card.premium-locked .premium-text {
+    font-size: 11px;
+    margin: 0;
+  }
+  
+  /* Show mobile premium overlay on mobile */
+  .mobile-premium-overlay {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3); /* Reduced opacity to allow clicking through */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 6px;
+    pointer-events: none; /* Allow clicking through the overlay */
+  }
+  
+  /* Hide thumbnail premium overlay on mobile */
+  .project-card .premium-overlay {
+    display: none !important;
+  }
+  
+  /* Light mode mobile premium overlay */
+  .light-mode .project-card.premium-locked .premium-overlay {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .light-mode .project-card.premium-locked .premium-overlay-content {
+    color: #ff6b35;
+  }
+  
+  .light-mode .project-card.premium-locked .premium-text {
+    color: #ff6b35;
+  }
+  
+  .light-mode .mobile-premium-overlay {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .light-mode .mobile-premium-overlay .premium-overlay-content {
+    color: #ff6b35;
+  }
+  
+  .light-mode .mobile-premium-overlay .premium-text {
+    color: #ff6b35;
+  }
 } 
+
+/* No projects message */
+.no-projects-message {
+  text-align: center;
+  color: #888;
+  font-size: 16px;
+  margin-top: 40px;
+}
+
+/* Free user welcome message */
+.free-user-welcome {
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.free-user-welcome h3 {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.free-user-welcome p {
+  color: #cccccc;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.free-user-welcome strong {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+/* Light mode styles for free user welcome */
+.light-mode .free-user-welcome h3 {
+  color: #333333;
+}
+
+.light-mode .free-user-welcome p {
+  color: #666666;
+}
+
+.light-mode .free-user-welcome strong {
+  color: #ff6b35;
+}
+
+/* Project actions and settings layout */
+.project-actions-and-settings {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: flex-end;
+}
+
+.project-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* MIDI Import Dropdown Styles */
+.midi-import-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #252525;
+  color: #e0e0e0;
+  border: 1px solid #3a3a3a;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.dropdown-toggle:hover {
+  background-color: #303030;
+  border-color: #454545;
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.dropdown-toggle:hover .dropdown-arrow {
+  opacity: 1;
+}
+
+.midi-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #1e1e1e;
+  border: 1px solid #2c2c2c;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  min-width: 220px;
+  overflow: visible;
+}
+
+.midi-dropdown-section {
+  padding: 8px 0;
+}
+
+.midi-dropdown-header {
+  padding: 8px 16px 4px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a0a0a0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.midi-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.midi-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.midi-dropdown-item:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.midi-dropdown-divider {
+  height: 1px;
+  background: #2c2c2c;
+  margin: 4px 0;
+}
+
+.custom-midi-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Remove the folder icon */
+.custom-midi-item::after {
+  content: "";
+}
+
+.custom-midi-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.custom-midi-item:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Light mode styles for MIDI dropdown */
+.light-mode .dropdown-toggle {
+  background-color: #ffffff;
+  color: #333333;
+  border: 1px solid #dee2e6;
+}
+
+.light-mode .dropdown-toggle:hover {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
+}
+
+.light-mode .midi-dropdown-menu {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .midi-dropdown-header {
+  color: #666666;
+}
+
+.light-mode .midi-dropdown-item {
+  color: #333333;
+}
+
+.light-mode .midi-dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #000000;
+}
+
+.light-mode .midi-dropdown-item:active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .midi-dropdown-divider {
+  background: #dee2e6;
+}
+
+.light-mode .custom-midi-item {
+  color: #333333;
+}
+
+.light-mode .custom-midi-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #000000;
+}
+
+.light-mode .custom-midi-item:active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Info icon styles */
+.info-icon {
+  margin-left: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.info-icon:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.info-icon svg {
+  display: block;
+}
+
+/* MIDI info popup styles */
+.midi-info-popup {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  width: 280px;
+  max-width: 80vw;
+  margin-right: 8px;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.midi-info-popup.show {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.midi-info-content {
+  padding: 12px;
+  color: #e0e0e0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.midi-info-content h4 {
+  margin: 0 0 6px 0;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.midi-info-content p {
+  margin: 0 0 8px 0;
+}
+
+.midi-info-content ul {
+  margin: 6px 0 8px 0;
+  padding-left: 16px;
+}
+
+.midi-info-content li {
+  margin: 3px 0;
+}
+
+.close-info-btn {
+  background: #4287f5;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.close-info-btn:hover {
+  background: #3367d6;
+}
+
+/* Light mode styles for info popup */
+.light-mode .midi-info-popup {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .midi-info-content {
+  color: #333333;
+}
+
+.light-mode .midi-info-content h4 {
+  color: #000000;
+}
+
+/* Progress Bar Styles for Transcription Modal */
+.progress-container {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #333;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4287f5, #64b5f6);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.progress-fill.animated {
+  animation: progressAnimation 2s ease-in-out infinite;
+}
+
+@keyframes progressAnimation {
+  0% {
+    width: 0%;
+    opacity: 0.7;
+  }
+  50% {
+    width: 70%;
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 0.7;
+  }
+}
+
+.progress-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #e0e0e0;
+}
+
+.loading-dots {
+  animation: loadingDots 1.5s infinite;
+}
+
+@keyframes loadingDots {
+  0%, 20% {
+    content: "Processing";
+  }
+  40% {
+    content: "Processing.";
+  }
+  60% {
+    content: "Processing..";
+  }
+  80%, 100% {
+    content: "Processing...";
+  }
+}
+
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #333;
+  border-top: 2px solid #4287f5;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
