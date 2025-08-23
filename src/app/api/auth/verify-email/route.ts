@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const user = await adapter.getUserByEmailVerificationToken?.(validatedToken) as CustomAdapterUserFields | null;
 
     if (!user) {
-      console.log("[Verify Email] No user found for token:", validatedToken.substring(0, 10) + "...");
+
       const errorRedirectUrl = new URL('/signin', process.env.NEXT_PUBLIC_APP_URL || request.url);
       errorRedirectUrl.searchParams.set('error', 'Verification');
       errorRedirectUrl.searchParams.set('email', ''); // Can't send email as we don't know it
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isTokenExpired) {
-        console.log("[Verify Email] Token expired for user:", user.email);
+
         // Use the casted adapter for updateUser
         await adapter.updateUser?.({
             id: user.id,
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (user.status !== 'pending_verification') {
-        console.log(`[Verify Email] User ${user.email} attempted to use token but status is already '${user.status}'.`);
+
         if (user.emailVerificationToken === validatedToken) {
              // Use the casted adapter for updateUser
              await adapter.updateUser?.({
@@ -111,14 +111,12 @@ export async function GET(request: NextRequest) {
         ConditionExpression: 'attribute_exists(id) AND #status = :pendingStatus'
     };
 
-    console.log("[Verify Email] About to execute DynamoDB update with params:", JSON.stringify(updateParams, null, 2));
-    console.log("[Verify Email] Current user status before update:", user.status);
-    console.log("[Verify Email] User ID being updated:", user.id);
+
+
     
     try {
         const updateResult = await dynamoDb.update(updateParams).promise();
-        console.log("[Verify Email] DynamoDB update successful for user:", user.email);
-        console.log("[Verify Email] Update result:", JSON.stringify(updateResult, null, 2));
+
     } catch (updateError: any) {
         console.error("[Verify Email] DynamoDB update failed. Error details:", JSON.stringify(updateError, null, 2));
         console.error("[Verify Email] Error code:", updateError.code);
@@ -141,7 +139,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(errorRedirectUrl.toString());
     }
     
-    console.log("[Verify Email] Email verified successfully for user:", user.email);
+
 
     // Redirect to a specific page on successful verification
     const verificationSuccessUrl = new URL('/auth/verification-success', process.env.NEXT_PUBLIC_APP_URL);

@@ -11,6 +11,11 @@ let loadRateLimiter: Ratelimit | null = null;
 let contactRateLimiter: Ratelimit | null = null;
 let signInRateLimiter: Ratelimit | null = null; // Added for sign-in attempts
 let registerRateLimiter: Ratelimit | null = null; // Added for registration attempts
+let videoToMidiRateLimiter: Ratelimit | null = null; // Added for video-to-midi operations
+let authRateLimiter: Ratelimit | null = null; // Added for auth operations
+let midiDownloadRateLimiter: Ratelimit | null = null; // Added for MIDI downloads
+let projectDeleteRateLimiter: Ratelimit | null = null; // Added for project deletion
+let stripeRateLimiter: Ratelimit | null = null; // Added for Stripe operations
 
 // Rate limiting setup
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
@@ -64,6 +69,46 @@ if (redisUrl && redisToken) {
       prefix: 'keycraft_ratelimit_register',
     });
 
+    // Video-to-MIDI Rate Limiter (resource-intensive operations)
+    videoToMidiRateLimiter = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(3, '60 m'), // 3 transcriptions per hour
+      analytics: true,
+      prefix: 'keycraft_ratelimit_video_to_midi',
+    });
+
+    // Auth Operations Rate Limiter (password reset, verification, etc.)
+    authRateLimiter = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(10, '60 m'), // 10 auth operations per hour
+      analytics: true,
+      prefix: 'keycraft_ratelimit_auth_ops',
+    });
+
+    // MIDI Download Rate Limiter
+    midiDownloadRateLimiter = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(50, '60 m'), // 50 downloads per hour
+      analytics: true,
+      prefix: 'keycraft_ratelimit_midi_download',
+    });
+
+    // Project Delete Rate Limiter
+    projectDeleteRateLimiter = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(10, '60 m'), // 10 deletions per hour
+      analytics: true,
+      prefix: 'keycraft_ratelimit_project_delete',
+    });
+
+    // Stripe Operations Rate Limiter
+    stripeRateLimiter = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(5, '60 m'), // 5 checkout sessions per hour
+      analytics: true,
+      prefix: 'keycraft_ratelimit_stripe',
+    });
+
 
   } catch (error) {
     // Redis initialization failed - rate limiting disabled
@@ -73,6 +118,11 @@ if (redisUrl && redisToken) {
     contactRateLimiter = null;
     signInRateLimiter = null;
     registerRateLimiter = null;
+    videoToMidiRateLimiter = null;
+    authRateLimiter = null;
+    midiDownloadRateLimiter = null;
+    projectDeleteRateLimiter = null;
+    stripeRateLimiter = null;
   }
 } else {
   // Redis environment variables not set - rate limiting disabled
@@ -82,12 +132,23 @@ if (redisUrl && redisToken) {
   contactRateLimiter = null;
   signInRateLimiter = null;
   registerRateLimiter = null;
+  videoToMidiRateLimiter = null;
+  authRateLimiter = null;
+  midiDownloadRateLimiter = null;
+  projectDeleteRateLimiter = null;
+  stripeRateLimiter = null;
 }
 // --- END Rate Limiting Initialization ---
 
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? ['https://www.keycraft.org', 'https://app.keycraft.org']
-  : ['http://keycraft.org:3000', 'http://app.keycraft.org:3001'];
+  ? [
+      process.env.NEXT_PUBLIC_MAIN_SITE_URL || 'https://www.keycraft.org',
+      process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'https://app.keycraft.org'
+    ]
+  : [
+      process.env.NEXT_PUBLIC_MAIN_SITE_URL || 'http://keycraft.org:3000',
+      process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'http://app.keycraft.org:3001'
+    ];
 
 // Helper function to add CORS headers to any response
 const addCorsHeaders = (response: NextResponse, origin: string | null) => {
@@ -194,11 +255,68 @@ export async function middleware(req: NextRequest) {
       const response = await applyRateLimiter(signInRateLimiter, 'sign-in');
       if (response) return response;
     }
+    // Video-to-MIDI operations
+    if (pathname.startsWith('/api/video-to-midi/upload')) {
+      const response = await applyRateLimiter(videoToMidiRateLimiter, 'video-to-midi upload');
+      if (response) return response;
+    }
+    // Auth operations
+    if (pathname.startsWith('/api/auth/reset-password')) {
+      const response = await applyRateLimiter(authRateLimiter, 'password reset');
+      if (response) return response;
+    }
+    if (pathname.startsWith('/api/auth/send-password-reset')) {
+      const response = await applyRateLimiter(authRateLimiter, 'password reset request');
+      if (response) return response;
+    }
+    if (pathname.startsWith('/api/auth/resend-verification')) {
+      const response = await applyRateLimiter(authRateLimiter, 'verification resend');
+      if (response) return response;
+    }
+    // Stripe operations
+    if (pathname.startsWith('/api/stripe/create-checkout-session')) {
+      const response = await applyRateLimiter(stripeRateLimiter, 'stripe checkout');
+      if (response) return response;
+    }
   }
 
   if (req.method === 'GET') {
     if (pathname.startsWith('/api/projects/load')) {
       const response = await applyRateLimiter(loadRateLimiter, 'project load');
+      if (response) return response;
+    }
+    // Video-to-MIDI operations
+    if (pathname.startsWith('/api/video-to-midi/quota')) {
+      const response = await applyRateLimiter(videoToMidiRateLimiter, 'video-to-midi quota');
+      if (response) return response;
+    }
+    if (pathname.startsWith('/api/video-to-midi/status/')) {
+      const response = await applyRateLimiter(videoToMidiRateLimiter, 'video-to-midi status');
+      if (response) return response;
+    }
+    // Auth operations
+    if (pathname.startsWith('/api/auth/verify-reset-token')) {
+      const response = await applyRateLimiter(authRateLimiter, 'reset token verification');
+      if (response) return response;
+    }
+    if (pathname.startsWith('/api/auth/verify-email')) {
+      const response = await applyRateLimiter(authRateLimiter, 'email verification');
+      if (response) return response;
+    }
+    if (pathname.startsWith('/api/auth/session-bridge')) {
+      const response = await applyRateLimiter(authRateLimiter, 'session bridge');
+      if (response) return response;
+    }
+    // MIDI downloads
+    if (pathname.startsWith('/api/midi-library/download')) {
+      const response = await applyRateLimiter(midiDownloadRateLimiter, 'midi download');
+      if (response) return response;
+    }
+  }
+
+  if (req.method === 'DELETE') {
+    if (pathname.startsWith('/api/projects/delete/')) {
+      const response = await applyRateLimiter(projectDeleteRateLimiter, 'project deletion');
       if (response) return response;
     }
   }
@@ -260,20 +378,20 @@ export async function middleware(req: NextRequest) {
       // Redirecting authenticated user to dashboard
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-    // console.log(`MIDDLEWARE: Path ${pathname} is universally public. Allowing.`);
+    // 
     return addCorsHeaders(NextResponse.next(), origin);
   }
 
   // Allow access to Next.js internals and static assets
   if (pathname.startsWith('/_next/') || pathname.startsWith('/static/') || pathname.includes('.')) {
-    // console.log(`MIDDLEWARE: Path ${pathname} is an asset/internal. Allowing.`);
+    // 
     return NextResponse.next();
   }
   
   // At this point, the path requires some level of authentication
 
   if (!token) {
-    // console.log(`MIDDLEWARE: No token. Path ${pathname} requires auth. Redirecting to /signin.`);
+    // 
     const signInUrl = new URL('/signin', req.url);
     signInUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(signInUrl);
@@ -286,7 +404,7 @@ export async function middleware(req: NextRequest) {
 
   if (!token.emailVerified || token.status !== 'active') {
     if (isPendingVerificationAllowedPath) {
-      // console.log(`MIDDLEWARE: Token exists but not verified/active. Path ${pathname} is allowed for pending verification. Allowing.`);
+      // 
       return addCorsHeaders(NextResponse.next(), origin);
     }
     // console.log(`MIDDLEWARE: Token exists but not verified/active (EmailVerified: ${token.emailVerified}, Status: ${token.status}). Path ${pathname} requires verification. Redirecting to /auth/verify-notice.`);
@@ -301,7 +419,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // If token exists, email is verified, and status is active, allow access.
-  // console.log(`MIDDLEWARE: User authenticated, verified, and active. Path ${pathname}. Allowing.`);
+  // 
   return addCorsHeaders(NextResponse.next(), origin);
 }
 

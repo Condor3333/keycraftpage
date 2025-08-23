@@ -6,7 +6,6 @@ const nextConfig = {
   experimental: {
     allowedDevOrigins: ['*'],
   },
-  allowedDevOrigins: ['http://keycraft.org:3000', 'http://app.keycraft.org:3001'],
   images: {
     remotePatterns: [
       {
@@ -51,7 +50,7 @@ const nextConfig = {
           { key: "Access-Control-Allow-Credentials", value: "true" },
           { key: "Access-Control-Allow-Methods", value: "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
           { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Cookie, Set-Cookie" },
-          { key: "Access-Control-Allow-Origin", value: process.env.NODE_ENV === 'production' ? 'https://app.keycraft.org' : 'http://app.keycraft.org:3001' },
+          { key: "Access-Control-Allow-Origin", value: process.env.NODE_ENV === 'production' ? (process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'https://app.keycraft.org') : (process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'http://app.keycraft.org:3001') },
           { key: "Access-Control-Expose-Headers", value: "Set-Cookie" },
         ],
       },
@@ -65,7 +64,8 @@ const nextConfig = {
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Basic script sources
               // ADDED: Allow images and media from your CloudFront CDN
               "img-src 'self' data: https://d1o9iute5tpibz.cloudfront.net",
-              "media-src 'self' https://d1o9iute5tpibz.cloudfront.net",
+              "media-src 'self' https://d1o9iute5tpibz.cloudfront.net https://keycraft-midi-library.s3.us-east-2.amazonaws.com https://*.s3.amazonaws.com https://*.s3.*.amazonaws.com",
+              "connect-src 'self' https://keycraft-midi-library.s3.us-east-2.amazonaws.com https://*.s3.amazonaws.com https://*.s3.*.amazonaws.com",
               "style-src 'self' 'unsafe-inline'", // Basic style sources
               "font-src 'self'", // Basic font sources
               "object-src 'none'", // Disallow plugins like Flash

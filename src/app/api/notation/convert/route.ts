@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         title: z.string().max(100).optional().or(z.literal('')),
       });
 
-      console.log('[Notation Convert] MIDI metadata values:', { quantize, keyHint, timeSig, bpm, title });
+      
 
       const metaParse = metaSchema.safeParse({ quantize, key: keyHint, timeSignature: timeSig, bpm, title });
       if (!metaParse.success) {
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'NOTATION_SERVICE_URL not configured' }, { status: 500 });
     }
 
-    console.log('[Notation Convert] Using external service:', notationServiceUrl);
+    
     const forward = new FormData();
     
     // Forward either MIDI file or JSON data

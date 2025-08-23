@@ -13,6 +13,7 @@ import html2canvas from 'html2canvas';
 import { hasStateChanged, getChangeSummary } from './utils/projectStateComparison.js';
 import Note from './components/Note';
 import SheetMusicView from './components/SheetMusicView';
+import ToastContainer from './components/ui/ToastContainer';
 
 function AppContent() {
   const { currentUser, forceSessionRefresh } = useAuth(); // ADDED: forceSessionRefresh from context
@@ -143,7 +144,7 @@ function AppContent() {
         // Request fullscreen when entering minimal mode
         if (document.documentElement.requestFullscreen) {
           document.documentElement.requestFullscreen().catch(err => {
-            console.log('Fullscreen request failed:', err);
+            
           });
         }
         // Turn on piano fullscreen when entering minimal mode
@@ -153,7 +154,7 @@ function AppContent() {
         // Exit fullscreen when leaving minimal mode
         if (document.exitFullscreen) {
           document.exitFullscreen().catch(err => {
-            console.log('Exit fullscreen failed:', err);
+            
           });
         }
         // Turn off piano fullscreen when leaving minimal mode
@@ -176,6 +177,8 @@ function AppContent() {
 
   // ADDED: State for audio sound type
   const [currentSoundType, setCurrentSoundType] = useState('piano');
+  // ADDED: Keyboard selection state
+  const [currentKeyboard, setCurrentKeyboard] = useState('keyboard3');
 
   // States for video recording
   const [isRecordingMode, setIsRecordingMode] = useState(false);
@@ -207,39 +210,32 @@ function AppContent() {
 
 
   const handleSetNoteGlow = (value) => {
-    console.log(`[App.js] Setting noteGlow to: ${value}`);
     setNoteGlow(value);
   };
 
   const handleSetNoteGradient = (value) => {
-    console.log(`[App.js] Setting noteGradient to: ${value}`);
     setNoteGradient(value);
   };
 
   const handleSetNoteMetallic = (value) => {
-    console.log(`[App.js] Setting noteMetallic to: ${value}`);
     setNoteMetallic(value);
   };
 
   const handleSetNoteNeon = (value) => {
-    console.log(`[App.js] Setting noteNeon to: ${value}`);
     setNoteNeon(value);
   };
 
   const handleSetNotePulse = (value) => {
-    console.log(`[App.js] Setting notePulse to: ${value}`);
     setNotePulse(value);
   };
 
 
 
   const handleSetNoteHolographic = (value) => {
-    console.log(`[App.js] Setting noteHolographic to: ${value}`);
     setNoteHolographic(value);
   };
 
   const handleSetNoteIce = (value) => {
-    console.log(`[App.js] Setting noteIce to: ${value}`);
     setNoteIce(value);
   };
 
@@ -255,6 +251,7 @@ function AppContent() {
 
     setNoteHolographic(0);
     setNoteIce(0);
+    setCurrentKeyboard('keyboard3'); // Reset to Grand keyboard style
   };
 
   // ADDED: Zoom handler functions
@@ -309,10 +306,10 @@ function AppContent() {
 
   // ADDED: Helper function to fetch an image and convert it to a data URL
   const imageToDataURL = (url) => {
-    console.log('[imageToDataURL] Attempting to fetch URL:', url);
+    
     return fetch(url, { mode: 'cors' }) // Explicitly set mode: 'cors' for the fetch
       .then(response => {
-        console.log('[imageToDataURL] Fetch response status:', response.status, 'ok:', response.ok, 'for URL:', url);
+        
         if (!response.ok) {
           // Try to get more error info if possible
           return response.text().then(text => {
@@ -326,11 +323,11 @@ function AppContent() {
         return response.blob();
       })
       .then(blob => {
-        console.log('[imageToDataURL] Successfully fetched blob. Type:', blob.type, 'Size:', blob.size, 'for URL:', url);
+        
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => {
-            console.log('[imageToDataURL] FileReader successfully converted blob to dataURL for URL:', url);
+            
             resolve(reader.result);
           };
           reader.onerror = (err) => {
@@ -360,35 +357,35 @@ function AppContent() {
   }, [isPianoFullscreen, isEditorView]); // ADD isEditorView to dependencies
 
   useEffect(() => {
-    console.log('Environment:', process.env.NODE_ENV);
-    // console.log('Electron API:', window.electronAPI); // Removed Electron logging
+    
+    //  // Removed Electron logging
 
     // Setup devThumbnailAPI for thumbnail mocks
     // This part is preserved but no longer inside an Electron-specific conditional
     if (isDev) { // Keep the isDev check if you want these only in development
-      console.log('Initializing window.devThumbnailAPI for development');
+      
       window.devThumbnailAPI = {
         saveThumbnail: async (projectId, thumbnailDataUrl) => {
-          console.log('Dev Thumbnail API: Saving thumbnail for project', projectId);
+          
           localStorage.setItem(`thumbnail_${projectId}`, thumbnailDataUrl);
           return true;
         },
         loadThumbnail: async (projectId) => {
-          console.log('Dev Thumbnail API: Loading thumbnail for project', projectId);
+          
           return localStorage.getItem(`thumbnail_${projectId}`);
         },
         deleteThumbnail: async (projectId) => {
-          console.log('Dev Thumbnail API: Deleting thumbnail for project', projectId);
+          
           localStorage.removeItem(`thumbnail_${projectId}`);
           return true;
         }
       };
 
       // Setup devBackgroundImageAPI for background image mocks
-      console.log('Initializing window.devBackgroundImageAPI for development');
+      
       window.devBackgroundImageAPI = {
         saveBackgroundImage: async (projectId, imageDataUrl) => {
-          console.log('Dev Background Image API: Saving background image for project', projectId);
+          
           try {
             localStorage.setItem(`bg_image_${projectId}`, imageDataUrl);
             return true;
@@ -398,25 +395,25 @@ function AppContent() {
           }
         },
         loadBackgroundImage: async (projectId) => {
-          console.log('Dev Background Image API: Loading background image for project', projectId);
+          
           return localStorage.getItem(`bg_image_${projectId}`);
         },
         deleteBackgroundImage: async (projectId) => {
-          console.log('Dev Background Image API: Deleting background image for project', projectId);
+          
           localStorage.removeItem(`bg_image_${projectId}`);
           return true;
         }
       };
-      // console.log('window.electronAPI for dev:', window.electronAPI); // Removed
-      console.log('window.devThumbnailAPI for dev:', window.devThumbnailAPI);
-      console.log('window.devBackgroundImageAPI for dev:', window.devBackgroundImageAPI);
+      //  // Removed
+      
+      
     }
   }, [isDev]);
   // ALL ABOVE is a mock API using browser storage for development purposes. 
 
   // Add this useEffect to test Firebase connection
   useEffect(() => {
-    console.log('User-related useEffect (App.js) - currentUser will be managed by AuthJS');
+    // User-related useEffect - currentUser will be managed by AuthJS
   }, [currentUser]);
 
   //==============SYNTH INITIALIZATION====================
@@ -4660,11 +4657,7 @@ function AppContent() {
 
   //==============EDITOR UPDATE====================
   const handleEditorUpdate = (updatedNoteData, shouldAddToHistory = true, isDragging = false) => {
-    console.log("=== APP.JS EDITOR UPDATE DEBUG START ===");
-    console.log("App.js handleEditorUpdate RECEIVED:", JSON.stringify(updatedNoteData));
-    console.log("[handleEditorUpdate] Number of notes in update:", updatedNoteData?.tracks?.[0]?.notes?.length || 0);
-    console.log("[handleEditorUpdate] shouldAddToHistory:", shouldAddToHistory, "isDragging:", isDragging);
-    
+
     // Debug velocity values in the incoming data
     if (updatedNoteData?.tracks?.[0]?.notes) {
       const velocityDebug = updatedNoteData.tracks[0].notes.map(note => ({
@@ -4672,7 +4665,6 @@ function AppContent() {
         velocity: note.velocity,
         midi: note.midi
       }));
-      console.log("Velocity values in incoming data:", velocityDebug);
     }
     
     if (updatedNoteData.bpm !== undefined && updatedNoteData.bpm !== bpm) {
@@ -4730,11 +4722,8 @@ function AppContent() {
           velocity: note.velocity,
           midi: note.midi
         }));
-        console.log("Final velocity values in history entry:", finalVelocityDebug);
       }
     }
-    
-    console.log("=== APP.JS EDITOR UPDATE DEBUG END ===");
 
     if (shouldAddToHistory && !isDragging) {
       if (updatedNoteData.noteGroups === undefined) setNoteGroups(new Map());
@@ -4815,7 +4804,7 @@ function AppContent() {
       } else {
         message = "You have reached your project limit. Please delete an existing project first, or upgrade your account for more projects.";
       }
-      alert(message);
+      window.showToast(message);
       return;
     }
 
@@ -4894,7 +4883,7 @@ function AppContent() {
         ...projectMetadata
       } = projectListItem;
 
-      console.log(`[HPS LOG 2] Extracted URLs: bundledDataUrl: ${bundledDataUrl}, midiDataUrl: ${midiDataUrl}, textAnnotationsUrl: ${textAnnotationsUrl}, backgroundImageUrl: ${backgroundImageUrl}`);
+      
       console.log("[HPS LOG 2.1] Project Metadata:", JSON.stringify(projectMetadata));
 
       let fetchedMidiData = null;
@@ -4903,11 +4892,11 @@ function AppContent() {
 
       // Attempt to convert S3 URL to data URL for background image
       if (backgroundImageUrl) {
-        console.log("[HPS LOG 2.5] Attempting to convert backgroundImageUrl to dataURL:", backgroundImageUrl);
+        
         try {
           finalBackgroundImageForState = await imageToDataURL(backgroundImageUrl);
           if (finalBackgroundImageForState) {
-            console.log("[HPS LOG 2.6] Successfully converted backgroundImageUrl to dataURL.");
+            
           } else {
             console.warn("[HPS LOG 2.7] Failed to convert backgroundImageUrl to dataURL. Background will be null.");
           }
@@ -4916,23 +4905,23 @@ function AppContent() {
           finalBackgroundImageForState = null; // Ensure it's null on error
         }
       } else {
-        console.log("[HPS LOG 2.8] No backgroundImageUrl provided.");
+        
       }
 
       // NEW: Check for bundled data first (more efficient - single HTTP request)
       if (bundledDataUrl) {
         try {
-          console.log("[HPS LOG 3] Fetching bundled data from:", bundledDataUrl);
+          
           const bundledResponse = await fetch(bundledDataUrl);
-          console.log(`[HPS LOG 4] Bundled Response Status: ${bundledResponse.status}, OK: ${bundledResponse.ok}`);
+          
           if (!bundledResponse.ok) {
             const errorText = await bundledResponse.text();
             console.error("[HPS Error] Failed to fetch bundled data. Status:", bundledResponse.status, "Text:", errorText);
-            alert(`Error loading project's data. Server Response: ${bundledResponse.statusText} - ${errorText}`);
+            window.showToast(`Error loading project's data. Server Response: ${bundledResponse.statusText} - ${errorText}`);
             return;
           }
           const rawBundledText = await bundledResponse.text();
-          console.log("[HPS LOG 5] Raw Bundled Response Text:", rawBundledText);
+          
           const bundledData = JSON.parse(rawBundledText);
           console.log("[HPS LOG 6] Parsed Bundled Data:", JSON.stringify(bundledData));
           
@@ -4942,42 +4931,42 @@ function AppContent() {
           
           if (!fetchedMidiData || !Array.isArray(fetchedMidiData.tracks)) {
             console.error("[HPS Error] Bundled MIDI data is not in the expected format (missing tracks array). Data:", fetchedMidiData);
-            alert("Error loading project's MIDI data: The data format is incorrect.");
+            window.showToast("Error loading project's MIDI data: The data format is incorrect.");
             return;
           }
-          console.log("[HPS LOG 6.5] Successfully extracted data from bundle. MIDI tracks:", fetchedMidiData.tracks.length, "Annotations:", fetchedTextAnnotations.length);
+          
         } catch (e) {
           console.error("[HPS Error] Error fetching or parsing bundled data from S3 URL:", bundledDataUrl, e);
-          alert("Error loading project's data. Check console and S3.");
+          window.showToast("Error loading project's data. Check console and S3.", "error");
           return;
         }
       } else {
         // Fallback to separate files (existing logic for older projects)
-        console.log("[HPS LOG 3] No bundled data URL, falling back to separate files");
+        
 
       if (midiDataUrl) {
         try {
-          console.log("[HPS LOG 3] Fetching MIDI from:", midiDataUrl);
+          
           const midiResponse = await fetch(midiDataUrl);
-          console.log(`[HPS LOG 4] MIDI Response Status: ${midiResponse.status}, OK: ${midiResponse.ok}`);
+          
           if (!midiResponse.ok) {
             const errorText = await midiResponse.text();
             console.error("[HPS Error] Failed to fetch MIDI data. Status:", midiResponse.status, "Text:", errorText);
-            alert(`Error loading project's MIDI data. Server Response: ${midiResponse.statusText} - ${errorText}`);
+            window.showToast(`Error loading project's MIDI data. Server Response: ${midiResponse.statusText} - ${errorText}`, "error");
             return;
           }
           const rawMidiText = await midiResponse.text(); // Get raw text first for logging
-          console.log("[HPS LOG 5] Raw MIDI Response Text:", rawMidiText);
+          
           fetchedMidiData = JSON.parse(rawMidiText); // Then parse
           console.log("[HPS LOG 6] Parsed MIDI Data:", JSON.stringify(fetchedMidiData));
           if (!fetchedMidiData || !Array.isArray(fetchedMidiData.tracks)) {
             console.error("[HPS Error] Fetched MIDI data is not in the expected format (missing tracks array). Data:", fetchedMidiData);
-            alert("Error loading project's MIDI data: The data format is incorrect.");
+            window.showToast("Error loading project's MIDI data: The data format is incorrect.", "error");
             return;
           }
         } catch (e) {
           console.error("[HPS Error] Error fetching or parsing MIDI data from S3 URL:", midiDataUrl, e);
-          alert("Error loading project's MIDI data. Check console and S3.");
+          window.showToast("Error loading project's MIDI data. Check console and S3.", "error");
           return;
         }
       } else {
@@ -4987,28 +4976,28 @@ function AppContent() {
 
       if (textAnnotationsUrl) {
         try {
-          console.log("[HPS LOG 8] Fetching Annotations from:", textAnnotationsUrl);
+          
           const annotationsResponse = await fetch(textAnnotationsUrl);
-          console.log(`[HPS LOG 9] Annotations Response Status: ${annotationsResponse.status}, OK: ${annotationsResponse.ok}`);
+          
           if (!annotationsResponse.ok) {
             const errorText = await annotationsResponse.text();
             console.error("[HPS Error] Failed to fetch Annotation data. Status:", annotationsResponse.status, "Text:", errorText);
-            alert(`Warning: Failed to load text annotations. Server Response: ${annotationsResponse.statusText} - ${errorText}`);
+            window.showToast(`Warning: Failed to load text annotations. Server Response: ${annotationsResponse.statusText} - ${errorText}`, "warning");
             fetchedTextAnnotations = [];
           } else {
             const rawAnnotationsText = await annotationsResponse.text(); // Get raw text first
-            console.log("[HPS LOG 10] Raw Annotations Response Text:", rawAnnotationsText);
+            
             fetchedTextAnnotations = JSON.parse(rawAnnotationsText); // Then parse
             console.log("[HPS LOG 11] Parsed Annotations Data:", JSON.stringify(fetchedTextAnnotations));
             if (!Array.isArray(fetchedTextAnnotations)){
               console.error("[HPS Error] Fetched annotation data is not an array. Data:", fetchedTextAnnotations);
-              alert("Warning: Text annotations for this project are in an incorrect format.");
+              window.showToast("Warning: Text annotations for this project are in an incorrect format.");
               fetchedTextAnnotations = [];
             }
           }
         } catch (e) {
           console.error("[HPS Error] Error fetching or parsing text annotations from S3 URL:", textAnnotationsUrl, e);
-          alert("Warning: Could not load text annotations.");
+          window.showToast("Warning: Could not load text annotations.");
           fetchedTextAnnotations = [];
         }
       } else {
@@ -5041,14 +5030,14 @@ function AppContent() {
         backgroundImageUrl: backgroundImageUrl, // Keep original S3 URL for reference
         thumbnailUrl: thumbnailUrl, 
       };
-      console.log("[HPS LOG 13] fullProjectForState prepared with backgroundImage as dataURL/null.");
+      
 
       setCurrentProject(fullProjectForState);
       console.log("[HPS LOG 14] setCurrentProject called with fullProjectForState. CurrentProject (after set attempt) might not be updated yet due to async nature of setState.");
 
       console.log("[HPS CRITICAL] About to set note data. fetchedMidiData:", JSON.stringify(fetchedMidiData));
       console.log("[HPS CRITICAL] fullProjectForState.midiData:", JSON.stringify(fullProjectForState.midiData));
-      console.log("[HPS CRITICAL] fullProjectForState.midiData.tracks[0].notes.length:", fullProjectForState.midiData?.tracks?.[0]?.notes?.length || 0);
+      
 
       setNoteData(fullProjectForState.midiData);    
       console.log("[HPS LOG 15] setNoteData called with:", JSON.stringify(fullProjectForState.midiData));
@@ -5078,7 +5067,7 @@ function AppContent() {
 
     } catch (error) {
       console.error('[HPS Error] Outer try-catch in handleProjectSelect:', error);
-      alert('Error loading project. Please try again.');
+      window.showToast('Error loading project. Please try again.');
     }
   };
 
@@ -5106,7 +5095,7 @@ function AppContent() {
       } else {
         message = "You have reached your project limit. Please delete an existing project first, or upgrade your account for more projects.";
       }
-      alert(message);
+      window.showToast(message);
       event.target.value = null; // Reset file input
       return;
     }
@@ -5114,7 +5103,7 @@ function AppContent() {
     // ADDED: File size check for a better user experience before reading
     const MAX_FILE_SIZE_MB = 5;
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      alert(`File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Please import a file smaller than ${MAX_FILE_SIZE_MB}MB.`);
+              window.showToast(`File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Please import a file smaller than ${MAX_FILE_SIZE_MB}MB.`, "warning");
       event.target.value = null; // Reset file input
       return;
     }
@@ -5144,7 +5133,7 @@ function AppContent() {
 
         // ADDED: Check against the note limit after parsing
         if (allNotes.length > NOTE_LIMIT) {
-          alert(`This MIDI file contains approximately ${allNotes.length.toLocaleString()} notes, which exceeds the project limit of ${NOTE_LIMIT.toLocaleString()}. Please import a smaller file.`);
+          window.showToast(`This MIDI file contains approximately ${allNotes.length.toLocaleString()} notes, which exceeds the project limit of ${NOTE_LIMIT.toLocaleString()}. Please import a smaller file.`, "warning");
           setIsImportingMidi(false);
           // Reset file input so user can select another file
           event.target.value = null;
@@ -5202,7 +5191,7 @@ function AppContent() {
           const saveResult = await saveProjectToStorage(newProject);
           if (!saveResult.success) {
             console.error('Error saving project:', saveResult.error);
-            alert(`Error saving project: ${saveResult.error}`);
+            window.showToast(`Error saving project: ${saveResult.error}`);
             return;
           }
 
@@ -5224,14 +5213,14 @@ function AppContent() {
           setDurationScale(1); // Reset duration scale when loading new project
         } catch (error) {
           console.error('Error in saveProjectToStorage call:', error);
-          alert('Error saving project. The MIDI file might be too large.');
+          window.showToast('Error saving project. The MIDI file might be too large.');
           return;
         }
 
         handleRestart();
       } catch (error) {
         console.error('Error parsing MIDI file:', error);
-        alert('Error loading MIDI file. Please try another file.');
+        window.showToast('Error loading MIDI file. Please try another file.');
       } finally {
         setIsImportingMidi(false); // Unset loading state
       }
@@ -5239,7 +5228,7 @@ function AppContent() {
 
     reader.onerror = () => {
       console.error("FileReader failed to read the file.");
-      alert("There was an error reading the file. Please try again.");
+      window.showToast("There was an error reading the file. Please try again.");
       setIsImportingMidi(false);
     };
 
@@ -5282,7 +5271,7 @@ function AppContent() {
     // File size check
     const MAX_FILE_SIZE_MB = 50; // Audio files can be larger than MIDI
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      alert(`File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Please select a file smaller than ${MAX_FILE_SIZE_MB}MB.`);
+              window.showToast(`File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Please select a file smaller than ${MAX_FILE_SIZE_MB}MB.`, "warning");
       event.target.value = null;
       return;
     }
@@ -5294,7 +5283,7 @@ function AppContent() {
       const durationMinutes = duration / 60;
       
       if (durationMinutes > MAX_DURATION_MINUTES) {
-        alert(`Audio file is too long (${durationMinutes.toFixed(1)} minutes). Please select a file shorter than ${MAX_DURATION_MINUTES} minutes to ensure successful transcription.`);
+        window.showToast(`Audio file is too long (${durationMinutes.toFixed(1)} minutes). Please select a file shorter than ${MAX_DURATION_MINUTES} minutes to ensure successful transcription.`);
         event.target.value = null;
         return;
       }
@@ -5322,7 +5311,7 @@ function AppContent() {
         let errorMsg = `HTTP error! status: ${response.status}`;
         try {
           const errorData = await response.json();
-          console.log('API Error Response:', errorData); // Debug logging
+           // Debug logging
           
           if (errorData.code === 'PAYMENT_REQUIRED') {
             errorMsg = 'AI Transcription is a premium feature. Please upgrade your account to use this feature.';
@@ -5343,14 +5332,14 @@ function AppContent() {
           console.error('Failed to parse error response:', parseError);
           errorMsg = `HTTP error! status: ${response.status}`;
         }
-        alert(errorMsg);
+        window.showToast(errorMsg);
         return;
       }
 
       // Async job pattern: get jobId and poll for status
       const { jobId } = await response.json();
       if (!jobId) {
-        alert('Failed to start transcription job.');
+        window.showToast('Failed to start transcription job.', "error");
         return;
       }
 
@@ -5382,15 +5371,15 @@ function AppContent() {
         }
       }
       if (jobStatus === 'pending') {
-        alert('Transcription timed out. Please try again later.');
+        window.showToast('Transcription timed out. Please try again later.');
         return;
       }
       if (jobStatus === 'error') {
-        alert(`Transcription failed: ${pollError}`);
+        window.showToast(`Transcription failed: ${pollError}`, "error");
         return;
       }
       if (!midiUrl) {
-        alert('Transcription completed but no MIDI result was returned.');
+        window.showToast('Transcription completed but no MIDI result was returned.');
         return;
       }
       // Fetch the MIDI data from the data URL (in-memory demo)
@@ -5416,7 +5405,7 @@ function AppContent() {
 
       // Check note limit
       if (allNotes.length > NOTE_LIMIT) {
-        alert(`The transcribed audio contains approximately ${allNotes.length.toLocaleString()} notes, which exceeds the project limit of ${NOTE_LIMIT.toLocaleString()}.`);
+        window.showToast(`The transcribed audio contains approximately ${allNotes.length.toLocaleString()} notes, which exceeds the project limit of ${NOTE_LIMIT.toLocaleString()}.`, "warning");
         return;
       }
 
@@ -5468,7 +5457,7 @@ function AppContent() {
       const saveResult = await saveProjectToStorage(newProject);
       if (!saveResult.success) {
         console.error('Error saving transcribed project:', saveResult.error);
-        alert(`Error saving transcribed project: ${saveResult.error}`);
+        window.showToast(`Error saving transcribed project: ${saveResult.error}`);
         return;
       }
 
@@ -5487,11 +5476,11 @@ function AppContent() {
       handleRestart();
 
       // Show success message
-      alert(`🎵 Audio transcription completed! Found ${uniqueNotes.length} notes.`);
+              window.showToast(`🎵 Audio transcription completed! Found ${uniqueNotes.length} notes.`, "success");
 
     } catch (error) {
       console.error('Error transcribing audio:', error);
-      alert(`Error transcribing audio: ${error.message}`);
+      window.showToast(`Error transcribing audio: ${error.message}`);
     } finally {
       setIsTranscribingAudio(false);
       event.target.value = null; // Reset file input
@@ -5516,7 +5505,7 @@ function AppContent() {
   const handleSave = () => {
     // Check if user has paid access for MIDI export
     if (!hasPaid) {
-      alert("MIDI export is a premium feature. Please upgrade your account to export your projects as MIDI files.");
+              window.showToast("MIDI export is a premium feature. Please upgrade your account to export your projects as MIDI files.", "warning");
       return;
     }
     setShowSaveDialog(true);
@@ -5526,7 +5515,7 @@ function AppContent() {
   const handleSaveMusicXml = async () => {
     // Check if user has paid access for MusicXML export
     if (!hasPaid) {
-      alert("MusicXML export is a premium feature. Please upgrade your account to export your projects as MusicXML files.");
+              window.showToast("MusicXML export is a premium feature. Please upgrade your account to export your projects as MusicXML files.", "warning");
       return;
     }
 
@@ -5571,8 +5560,8 @@ function AppContent() {
         credentials: 'include'
       });
 
-      console.log('MusicXML response status:', response.status);
-      console.log('MusicXML response ok:', response.ok);
+      
+      
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -5581,23 +5570,23 @@ function AppContent() {
       }
 
       const musicXml = await response.text();
-      console.log('MusicXML received, length:', musicXml.length);
+      
       console.log('MusicXML first 200 chars:', musicXml.substring(0, 200));
 
       // Create and download the MusicXML file
       const blob = new Blob([musicXml], { type: 'application/vnd.recordare.musicxml+xml' });
-      console.log('Blob created, size:', blob.size);
+      
       
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       
       const filename = currentProject?.name ? `${currentProject.name}.musicxml` : 'my-piano-roll.musicxml';
-      console.log('Downloading file as:', filename);
+      
       
       link.download = filename;
       link.click();
       
-      console.log('Download link clicked');
+      
       
       // Cleanup
       URL.revokeObjectURL(link.href);
@@ -5845,19 +5834,19 @@ function AppContent() {
 
   // Modify handleBackToProjects
   const handleBackToProjects = async () => {
-    console.log("[BackToProjects] Starting handleBackToProjects. isDirty:", isDirty);
+    
     
     setIsReturningToProjects(true); // Show "Returning to Project List..." modal
     
     if (isDirty) {
-      console.log("[BackToProjects] Project is dirty. Initiating save and exit process.");
+      
       setIsSavingOnExit(true); // Show "Saving..." modal
       setCloudSaveError(null); // Clear previous errors
       // handleManualCloudSave calls saveProjectToStorage, which now correctly calls loadProjectsFromCloud on success.
       await handleManualCloudSave(); 
       setIsSavingOnExit(false); // Hide "Saving..." modal after operation completes
     } else {
-      console.log("[BackToProjects] Project is not dirty. Triggering project list reload.");
+      
       // Explicitly trigger a reload for the non-dirty case to ensure the list is always fresh.
       await loadProjectsFromCloud();
     }
@@ -5903,7 +5892,7 @@ function AppContent() {
   //==============PROJECT NAME CHANGE====================
   const handleProjectNameChange = async (projectId, newName) => {
     try {
-      console.log(`Attempting to change project name for ${projectId} to ${newName}. Firestore call removed.`);
+      
 
       // Update projects list in state
       setProjects(prevProjects => 
@@ -5924,14 +5913,14 @@ function AppContent() {
       }
     } catch (error) {
       console.error('Error updating project name (local state change only):', error);
-      // alert('Failed to update project name. Please try again.'); // Alerting might be too disruptive now
+      // window.showToast('Failed to update project name. Please try again.'); // Alerting might be too disruptive now
     }
   };
 
   //==============PROJECT DELETE====================
   const handleProjectDelete = async (projectId) => {
     if (!currentUser || !currentUser.id) {
-      alert('You must be logged in to delete projects.');
+              window.showToast('You must be logged in to delete projects.', "error");
       return;
     }
 
@@ -5950,7 +5939,7 @@ function AppContent() {
       const responseData = await response.json();
 
       if (response.ok) {
-        console.log(`Project ${projectId} deleted successfully from server.`); // Corrected "MongoDB" to "server"
+         // Corrected "MongoDB" to "server"
         
         // Delete thumbnail from local storage in dev mode
         if (isDev && window.devThumbnailAPI && typeof window.devThumbnailAPI.deleteThumbnail === 'function') {
@@ -5969,19 +5958,19 @@ function AppContent() {
         }
       } else {
         console.error('Error deleting project from server:', responseData.message || response.statusText); // Corrected "MongoDB" to "server"
-        alert(`Error deleting project: ${responseData.message || 'Please try again.'}`);
+        window.showToast(`Error deleting project: ${responseData.message || 'Please try again.'}`, "error");
       }
     } catch (error) {
       console.error('Network or other error deleting project:', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown network error occurred.';
-      alert(`Error deleting project: ${errorMessage}`);
+              window.showToast(`Error deleting project: ${errorMessage}`, "error");
     }
   };
 
   //==============PROJECT DUPLICATE====================
   const handleProjectDuplicate = async (projectToDuplicate) => {
     try {
-      console.log(`Attempting to duplicate project ${projectToDuplicate.id}. Firestore calls removed.`);
+      
 
       // Load the full project data
       const fullProject = await loadProjectFromStorage(projectToDuplicate.id); // This will now return a placeholder
@@ -6022,7 +6011,7 @@ function AppContent() {
       
     } catch (error) {
       console.error('Error duplicating project (local state change only):', error);
-      // alert('Error duplicating project. Please try again.');
+      // window.showToast('Error duplicating project. Please try again.');
     }
   };
 
@@ -6030,9 +6019,9 @@ function AppContent() {
   // Modify saveProjectToStorage to use Firestore
   const saveProjectToStorage = async (projectToSave) => {
     console.log("[saveProjectToStorage] About to save project with noteData:", JSON.stringify(noteData));
-    console.log("[saveProjectToStorage] Number of notes in noteData:", noteData?.tracks?.[0]?.notes?.length || 0);
+    
     console.log("[saveProjectToStorage] projectToSave.midiData:", JSON.stringify(projectToSave.midiData));
-    console.log("[saveProjectToStorage] Number of notes in projectToSave.midiData:", projectToSave.midiData?.tracks?.[0]?.notes?.length || 0);
+    
     
     if (!projectToSave || !projectToSave.id) {
       console.error("[Client Save] No project data or project ID to save.");
@@ -6090,8 +6079,8 @@ function AppContent() {
       }
     }
 
-    console.log(`[Client Save] backgroundImageHasChanged: ${backgroundImageHasChanged}`);
-    // console.log(`[Client Save] Current BG: ${projectToSave.backgroundImage ? 'Exists' : 'null'}, Last Saved BG: ${lastSavedState?.backgroundImage ? 'Exists' : 'null'}`);
+    
+    // 
     console.log(`[Client Save] thumbnailHasChanged (based on presence of new data): ${thumbnailHasChanged}`);
 
 
@@ -6147,7 +6136,7 @@ function AppContent() {
 
       if (response.ok) {
         const responseData = await response.json(); // Define and await here
-        console.log('Project saved successfully. Server response:', responseData.project);
+        
         
         const serverProjectItem = responseData.project;
 
@@ -6202,7 +6191,7 @@ function AppContent() {
           if (response.status === 429) {
             const errorText = await response.text(); // Original response for text
             const resetTimestamp = response.headers.get('X-RateLimit-Reset');
-            console.log('[Client Save 429] X-RateLimit-Reset header:', resetTimestamp); // Log the header
+             // Log the header
             let specificMessage = errorText || 'Too many save requests.';
             if (resetTimestamp) {
               const resetTime = new Date(resetTimestamp).getTime();
@@ -6248,7 +6237,7 @@ function AppContent() {
 
   // Modify loadProjectFromStorage to use Firestore
   const loadProjectFromStorage = async (projectId) => {
-    console.log(`loadProjectFromStorage called for ${projectId}. Firebase/Firestore logic removed. This is a placeholder.`);
+    
     // try {
     //   if (!currentUser) {
     //     throw new Error('User not authenticated');
@@ -6266,11 +6255,11 @@ function AppContent() {
 
     //   if (isDev && typeof loadedBackgroundImage === 'string' && loadedBackgroundImage.startsWith('local:') && typeof window.devBackgroundImageAPI?.loadBackgroundImage === 'function') {
     //     const storedProjectIdForBg = loadedBackgroundImage.split(':')[1];
-    //     console.log('Dev: Loading background image from local storage for project:', storedProjectIdForBg);
+    //     
     //     const localBgDataUrl = await window.devBackgroundImageAPI.loadBackgroundImage(storedProjectIdForBg);
     //     if (localBgDataUrl) {
     //       loadedBackgroundImage = localBgDataUrl; // Replace identifier with actual Data URL
-    //       console.log('Dev: Background image loaded successfully from local storage.');
+    //       
     //     } else {
     //       console.warn(`Dev: Background image for project ${storedProjectIdForBg} not found in local storage.`);
     //       loadedBackgroundImage = null;
@@ -6300,10 +6289,10 @@ function AppContent() {
     // Placeholder: return a found project from local state if available, or null
     const project = projects.find(p => p.id === projectId);
     if (project) {
-        console.log(`Placeholder load: Found project ${projectId} in local state.`);
+        
         return JSON.parse(JSON.stringify(project)); // Return a copy
     }
-    console.log(`Placeholder load: Project ${projectId} not found in local state.`);
+    
     return null;
   };
 
@@ -6533,7 +6522,7 @@ function AppContent() {
         )
       );
       
-      // console.log('[App.js useEffect] Project updated in state for BG/color/TS change, auto-save REMOVED.');
+      // 
       // saveProjectToStorage(updatedProject).catch(error => {
       //   console.error('Error saving project with background:', error);
       // });
@@ -6542,8 +6531,8 @@ function AppContent() {
 
   // Add console log to track background image changes
   useEffect(() => {
-    console.log('Background image updated:', backgroundImage ? 'Set' : 'Not set');
-    console.log('Current project:', currentProject?.id);
+    
+    
   }, [backgroundImage]);
 
   // Add effect to sync background image with current project
@@ -6551,7 +6540,7 @@ function AppContent() {
     const s3Key = currentProject?.appearance?.backgroundImageS3Key;
     if (!s3Key) { // If there's no S3 key (either no current project, or project has no key)
       if (backgroundImage !== null) { // And the current UI state is not already null
-        // console.log(`App.js effect[currentProjectS3Key]: S3 key is ${s3Key}. Clearing backgroundImage state.`);
+        // 
         setBackgroundImage(null);
       }
     }
@@ -6639,7 +6628,7 @@ function AppContent() {
 
   // Add a BPM change handler
   const handleBpmChange = (newBpm) => {
-    console.log('handleBpmChange called with:', newBpm);
+    
     setBpm(newBpm);
     
     // Calculate the new playback speed to match the BPM
@@ -6648,7 +6637,7 @@ function AppContent() {
     // If BPM is 120, we want playbackSpeed = 0.5 (half speed to make 60 beats take 30 seconds)
     // If BPM is 30, we want playbackSpeed = 0.125 (eighth speed to make 60 beats take 120 seconds)
     const newPlaybackSpeed = newBpm / 240;
-    console.log('Setting playback speed to:', newPlaybackSpeed);
+    
     setPlaybackSpeed(newPlaybackSpeed);
     
     if (isPlaying) {
@@ -6724,7 +6713,7 @@ function AppContent() {
     }));
 
     setClipboardNotes({ notes: relativeNotes, originalMaxEndTime }); // Store notes and originalMaxEndTime
-    console.log("Notes copied to clipboard:", relativeNotes, "Original Max End Time:", originalMaxEndTime);
+    
   };
 
   const handlePaste = () => {
@@ -6733,7 +6722,7 @@ function AppContent() {
     // ADDED: Check against note limit
     const currentNoteCount = noteData?.tracks?.[0]?.notes?.length || 0;
     if (currentNoteCount + clipboardNotes.notes.length > NOTE_LIMIT) {
-      alert(`Pasting these notes would exceed the project note limit of ${NOTE_LIMIT.toLocaleString()}.`);
+      window.showToast(`Pasting these notes would exceed the project note limit of ${NOTE_LIMIT.toLocaleString()}.`);
       return;
     }
 
@@ -6783,7 +6772,7 @@ function AppContent() {
       originalMaxEndTime: maxEndTimeOfCurrentPaste // Update the end time for the next paste
     }));
 
-    console.log("Notes pasted starting at:", pasteStartTime, "New max end time for next paste:", maxEndTimeOfCurrentPaste);
+    
   };
 
   const handleDelete = () => {
@@ -6810,7 +6799,7 @@ function AppContent() {
     setNoteGroups(new Map());
     setGroupColors(new Map());
 
-    console.log("Selected notes deleted");
+    
   };
 
   //==============RENDER SECTION====================
@@ -6869,17 +6858,17 @@ function AppContent() {
           console.log('[SaveThumbnailDebug] Initial bgToUseForCanvas:', bgToUseForCanvas ? bgToUseForCanvas.substring(0,100) + '...' : 'null');
 
           if (bgToUseForCanvas && typeof bgToUseForCanvas === 'string' && bgToUseForCanvas.startsWith('http')) {
-            console.log('[SaveThumbnailDebug] Background is HTTP URL, calling imageToDataURL to convert it.');
+            
             const convertedDataUrl = await imageToDataURL(bgToUseForCanvas);
             if (convertedDataUrl) {
               bgToUseForCanvas = convertedDataUrl; // Use the successfully converted data URL
-              console.log('[SaveThumbnailDebug] imageToDataURL successful. bgToUseForCanvas is now a dataURL.');
+              
             } else {
               console.warn('[SaveThumbnailDebug] imageToDataURL returned null. Setting bgToUseForCanvas to null to avoid using stale S3 URL.');
               bgToUseForCanvas = null; // Explicitly set to null if conversion failed
             }
           } else if (bgToUseForCanvas) {
-            console.log('[SaveThumbnailDebug] Background is already a data URL or not an HTTP link.');
+            
           } else {
             console.log('[SaveThumbnailDebug] No background image specified (bgToUseForCanvas is null/undefined).');
           }
@@ -6891,7 +6880,7 @@ function AppContent() {
               bgContainer.style.backgroundImage = `url("${bgToUseForCanvas}")`;
             } else {
               // If no image, ensure it's cleared for capture
-              console.log('[SaveThumbnailDebug] No bgToUseForCanvas; clearing bgContainer.style.backgroundImage.');
+              
               bgContainer.style.backgroundImage = 'none';
             }
             // bgContainer.style.opacity = '1'; // Ensure opacity for capture
@@ -6901,7 +6890,7 @@ function AppContent() {
             console.warn('[SaveThumbnailDebug] .background-image-container not found.');
           }
           
-          console.log('[Thumbnail] Attempting html2canvas capture...');
+          
           const canvas = await html2canvas(rollElement, {
             logging: true,
             useCORS: true, 
@@ -6925,7 +6914,7 @@ function AppContent() {
         } finally {
           // Restore original styles
           if (bgContainer) {
-            console.log('[Thumbnail] Restoring original styles to .background-image-container.');
+            
             bgContainer.style.opacity = originalBgContainerStyleOpacity;
             bgContainer.style.backgroundImage = originalBgContainerStyleImage; // Restore original image
           }
@@ -6964,11 +6953,11 @@ function AppContent() {
   // ADDED: Function to load projects from the cloud
   const loadProjectsFromCloud = useCallback(async () => {
     if (!currentUser || !currentUser.id) {
-      console.log("No user, skipping cloud project load.");
+      
       setProjects([]); 
       return;
     }
-    console.log("Attempting to load projects from cloud...");
+    
     setIsLoadingProjects(true);
     setLoadProjectsError(null);
     try {
@@ -6981,7 +6970,7 @@ function AppContent() {
       });
       const data = await response.json();
       if (response.ok) {
-        console.log("Projects loaded successfully from cloud with URLs:", data.projects);
+        
         
         const projectsWithDatesAndStructure = data.projects.map(p => ({
           ...p, 
@@ -7009,14 +6998,12 @@ function AppContent() {
     const checkPaymentSuccessAndLoad = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('session_id')) { // Stripe adds session_id for success
-        console.log('[App.js] Detected return from Stripe payment. Forcing session refresh.');
         try {
           await forceSessionRefresh(); // Call the new refresh function
           // Optional: remove the query params from URL to prevent re-triggering on manual page refresh
           window.history.replaceState({}, document.title, window.location.pathname);
-          console.log('[App.js] Session refresh attempted. Will now load projects.');
         } catch (e) {
-          console.error('[App.js] Error during forced session refresh:', e);
+          // Error during forced session refresh
         }
         // Add a small delay to allow NextAuth.js session to potentially update fully on server & client
         // before trying to load projects which depend on the `hasPaid` status.
@@ -7129,7 +7116,7 @@ function AppContent() {
       
       // Check browser support for MediaRecorder
       if (!window.MediaRecorder) {
-        alert('Video recording is not supported in this browser. Please try Chrome or Firefox.');
+        window.showToast('Video recording is not supported in this browser. Please try Chrome or Firefox.', "warning");
         return;
       }
 
@@ -7138,7 +7125,7 @@ function AppContent() {
       let mediaRecorder;
       
       try {
-        console.log('Requesting screen capture permission...');
+        
         // Request screen/tab capture with optimized settings
         stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
@@ -7155,7 +7142,7 @@ function AppContent() {
         // Use a more compatible codec for better performance
         let mimeType = 'video/webm;codecs=vp8'; // vp8 is more performant than vp9
         if (!MediaRecorder.isTypeSupported(mimeType)) {
-          console.log(`${mimeType} not supported, falling back to video/webm`);
+          
           mimeType = 'video/webm';
         }
         
@@ -7170,7 +7157,7 @@ function AppContent() {
           videoBitsPerSecond: mediaRecorder.videoBitsPerSecond
         });
         
-        console.log('Using screen capture - select your browser tab for best results');
+        
         
       } catch (error) {
         // Show detailed error information
@@ -7191,7 +7178,7 @@ function AppContent() {
           errorMessage += `An error occurred: ${error.message}`;
         }
         
-        alert(errorMessage);
+        window.showToast(errorMessage);
         setIsRecording(false);
         setIsRecordingMode(false);
         setRecordingProgress(0);
@@ -7229,7 +7216,7 @@ function AppContent() {
         setIsRecordingMode(false);
         setRecordingProgress(0);
         
-        console.log('Video export completed!');
+        
       };
       
       // Calculate song duration for progress tracking
@@ -7261,7 +7248,7 @@ function AppContent() {
       
     } catch (error) {
       console.error('Video export failed:', error);
-      alert('Video export failed: ' + error.message);
+              window.showToast('Video export failed: ' + error.message, "error");
       setIsRecording(false);
       setIsRecordingMode(false);
       setRecordingProgress(0);
@@ -7493,6 +7480,9 @@ function AppContent() {
             // ADDED: Audio sound type props
             currentSoundType={currentSoundType}
             setCurrentSoundType={setCurrentSoundType}
+            // ADDED: Keyboard selection props
+            currentKeyboard={currentKeyboard}
+            setCurrentKeyboard={setCurrentKeyboard}
             showSheetMusic={showSheetMusic}
             onToggleSheetMusic={handleToggleSheetMusic}
             showSideBySide={showSideBySide}
@@ -8045,6 +8035,7 @@ const App = () => {
   return (
     <AuthProvider>
       <AppContent />
+      <ToastContainer />
     </AuthProvider>
   );
 };

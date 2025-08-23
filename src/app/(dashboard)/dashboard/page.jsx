@@ -7,7 +7,7 @@ import './dashboard.css'; // Import the CSS file
 export default function DashboardPage() {
   const { data: session, status } = useSession();
 
-  console.log('[DashboardPage] Rendering with session status:', status, 'and session data:', session);
+
 
   // Show a loading spinner while the session is being fetched
   if (status === 'loading') {
@@ -46,7 +46,7 @@ export default function DashboardPage() {
   const activePlans = user.activePlans || [];
   const emailVerified = user.emailVerified;
   
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://app.keycraft.org:3001';
+  const appUrl = process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'http://app.keycraft.org:3001';
 
   return (
     <div className="dashboard-container">

@@ -36,7 +36,7 @@ export default function MembershipSection() { // Renamed component
     localStorage.removeItem('demo-purchased-tier2');
     setUserPlans({ freeTier: true, tier1: false, tier2: false });
     setLocalStorageValue('Tier1: null, Tier2: null');
-    console.log("Purchase status reset.");
+
     // Consider also calling an API to reset on server if your demo purchase affects DB
   };
   
@@ -44,9 +44,9 @@ export default function MembershipSection() { // Renamed component
   useEffect(() => {
     function determineUserPlans() {
       if (status === 'authenticated' && session?.user?.email) {
-        console.log("[MembershipSection] Checking plans. Session status: authenticated. session.user.hasPaid:", session.user.hasPaid, "Session user:", session.user);
+
         if (session.user.hasPaid) { // Check hasPaid from session
-          console.log("User is authenticated and session.user.hasPaid is true.");
+
           // For simplicity, if hasPaid, assume they have access to all paid features shown
           // A more robust solution would check session.user.activePlans against specific plan IDs.
           setUserPlans({
@@ -59,14 +59,14 @@ export default function MembershipSection() { // Renamed component
           localStorage.setItem('demo-purchased-tier2', 'true');
           setLocalStorageValue('Tier1: true (derived from hasPaid), Tier2: true (derived from hasPaid)');
         } else {
-          console.log("User is authenticated but session.user.hasPaid is false or undefined.");
+
           setUserPlans({ freeTier: true, tier1: false, tier2: false });
           localStorage.removeItem('demo-purchased-tier1');
           localStorage.removeItem('demo-purchased-tier2');
           setLocalStorageValue('Tier1: null, Tier2: null');
         }
       } else {
-        console.log("User not authenticated or email not available. Defaulting to free tier.");
+
         setUserPlans({ freeTier: true, tier1: false, tier2: false });
       }
       setPlansChecked(true);

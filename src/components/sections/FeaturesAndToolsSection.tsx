@@ -27,7 +27,7 @@ const ToolCard: React.FC<ToolCardProps> = ({ title, description, images, videoSr
   const [cardWrapperRef, isCardVisible] = useIsVisible<HTMLDivElement>({ threshold: 0.5 });
   const videoElementRef = useRef<HTMLVideoElement>(null);
 
-  console.log(`ToolCard '${title}' videoSrc:`, videoSrc);
+
 
   useEffect(() => {
     if (!videoSrc && images && images.length > 1) {
@@ -112,8 +112,7 @@ export default function FeaturesAndToolsSection() {
 
   const mainToolbarVideoSrc = getPublicAssetUrl("/KCMPvideos/KCVidToolbar.mp4");
   const mainKCVid1Src = getPublicAssetUrl("/KCMPvideos/KCVid1.mp4");
-  console.log('Main Toolbar Video Src:', mainToolbarVideoSrc);
-  console.log('Main KCVid1 Src:', mainKCVid1Src);
+
 
   useEffect(() => {
     const vid1 = mainVideoElementRef1.current;
@@ -185,7 +184,7 @@ export default function FeaturesAndToolsSection() {
 
   const duplicatedToolData = [...toolData, ...toolData, ...toolData];
   const storageImageSrc = getPublicAssetUrl("/images/Storage.png");
-  console.log('Storage Image Src:', storageImageSrc);
+
 
   const [activeTab, setActiveTab] = useState('features');
 

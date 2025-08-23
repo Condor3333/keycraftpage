@@ -19,11 +19,12 @@ function ResetPasswordForm() {
   const [checkingToken, setCheckingToken] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [tokenError, setTokenError] = useState(''); // Separate token validation errors
 
   useEffect(() => {
     const verifyToken = async () => {
       if (!token) {
-        setError('No password reset token found. Please request a new reset link.');
+        setTokenError('No password reset token found. Please request a new reset link.');
         setCheckingToken(false);
         return;
       }
@@ -34,10 +35,10 @@ function ResetPasswordForm() {
           setIsTokenValid(true);
         } else {
           const data = await res.json();
-          setError(data.message || 'Invalid or expired token. Please request a new reset link.');
+          setTokenError(data.message || 'Invalid or expired token. Please request a new reset link.');
         }
       } catch (err) {
-        setError('An error occurred while verifying the token.');
+        setTokenError('An error occurred while verifying the token.');
       } finally {
         setCheckingToken(false);
       }
@@ -102,13 +103,18 @@ function ResetPasswordForm() {
         
         {message ? (
           <p className={styles.successText} style={{color: 'green', textAlign: 'center'}}>{message}</p>
-        ) : !isTokenValid || error ? (
+        ) : tokenError ? (
             <div className={styles.errorContainer}>
-                <p className={styles.errorMessage}>{error}</p>
+                <p className={styles.errorMessage}>{tokenError}</p>
                 <Link href="/forgot-password" className={styles.link}>Request a new link</Link>
             </div>
         ) : (
           <form onSubmit={handleSubmit} className={styles.form}>
+            {error && (
+              <div className={styles.errorContainer}>
+                <p className={styles.errorMessage}>{error}</p>
+              </div>
+            )}
             <div className={styles.inputGroup}>
               <label htmlFor="password">New Password</label>
               <div className={styles.passwordInputWrapper}>

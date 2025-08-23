@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../../auth';
 
-const DEFAULT_APP_ORIGIN = 'http://app.keycraft.org:3001';
+const DEFAULT_APP_ORIGIN = process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'http://app.keycraft.org:3001';
 const ALLOWED_ORIGINS = new Set<string>([
   DEFAULT_APP_ORIGIN,
   process.env.NEXT_PUBLIC_APP_ORIGIN || DEFAULT_APP_ORIGIN,
-  'http://localhost:3001',
 ]);
 
 function withCors(response: NextResponse, origin: string | null) {

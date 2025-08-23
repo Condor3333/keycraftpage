@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const body = await req.text();
     const signature = (await headers()).get("stripe-signature") || "";
 
-    console.log("STRIPE WEBHOOK: Received webhook call");
+    
     
     // Make sure we have a webhook secret configured
     if (!webhookSecret) {
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log(`STRIPE WEBHOOK: Verified event type: ${event.type}`);
+    
 
     // Extract data and type from the event
     const { data, type } = event;
@@ -55,29 +55,29 @@ export async function POST(req: Request) {
     if (type === 'checkout.session.completed') {
       const session = data.object as Stripe.Checkout.Session;
       
-      console.log(`STRIPE WEBHOOK: Processing checkout completion: ${session.id}`);
-      console.log(`STRIPE WEBHOOK: Payment status: ${session.payment_status}`);
-      console.log(`STRIPE WEBHOOK: Customer: ${session.customer}`);
-      console.log(`STRIPE WEBHOOK: Customer email: ${session.customer_details?.email}`);
+      
+      
+      
+      
       
       // Make sure the payment was successful
       if (session.payment_status === 'paid') {
-        console.log(`STRIPE WEBHOOK: Payment successful for session ${session.id}`);
+        
         await handleSuccessfulPayment(session);
       } else {
-        console.log(`STRIPE WEBHOOK: Payment not completed. Status: ${session.payment_status}`);
+        
       }
     } 
     // Handle subscription cancellations
     else if (type === 'customer.subscription.deleted') {
       const subscription = data.object as Stripe.Subscription;
-      console.log(`STRIPE WEBHOOK: Subscription cancelled: ${subscription.id}`);
+      
       await handleSubscriptionCancellation(subscription);
     }
     // Handle subscription updates (downgrade/upgrade)
     else if (type === 'customer.subscription.updated') {
       const subscription = data.object as Stripe.Subscription;
-      console.log(`STRIPE WEBHOOK: Subscription updated: ${subscription.id}`);
+      
       await handleSubscriptionUpdate(subscription);
     }
 
@@ -147,7 +147,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
 
     if (fetchedLineItems.length > 0 && fetchedLineItems[0].price) {
       const priceIdFromLineItem = fetchedLineItems[0].price.id;
-      console.log(`STRIPE WEBHOOK: Price ID from fetched line_items: ${priceIdFromLineItem}`);
+      
       
       if (priceIdFromLineItem === process.env.NEXT_PUBLIC_STRIPE_TIER1_PRICE_ID) {
         planType = 'tier1';
@@ -173,12 +173,12 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
 
     if (stripeCustomerId && !((user as any).customerId)) {
       updateData.customerId = stripeCustomerId;
-      console.log(`STRIPE WEBHOOK: Storing Stripe Customer ID ${stripeCustomerId} for user ${user.email}`);
+      
     }
     
     await adapter.updateUser!(updateData);
 
-    console.log(`STRIPE WEBHOOK: Successfully updated payment status for user: ${user.email}. Plan: ${planType}`);
+    
     console.log(`STRIPE WEBHOOK: User payment status after update attempt: hasPaid=${updateData.hasPaid}, activePlans=${JSON.stringify(updateData.activePlans)}`);
     
   } catch (error) {
@@ -189,7 +189,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
 
 // Function to handle subscription cancellation
 async function handleSubscriptionCancellation(subscription: Stripe.Subscription) {
-  console.log(`STRIPE WEBHOOK: Received 'customer.subscription.deleted' for subscription ID: ${subscription.id}, Customer ID: ${subscription.customer}`);
+  
   try {
     if (!subscription.customer) {
       console.error("STRIPE WEBHOOK (Subscription Cancel): No customer ID in subscription object.");
@@ -278,7 +278,7 @@ async function handleSubscriptionCancellation(subscription: Stripe.Subscription)
 
 // Function to handle subscription updates (downgrades/upgrades)
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-  console.log(`STRIPE WEBHOOK: Received 'customer.subscription.updated' for subscription ID: ${subscription.id}, Customer ID: ${subscription.customer}, Status: ${subscription.status}`);
+  
   try {    
     if (!subscription.customer) {
       console.error("STRIPE WEBHOOK (Subscription Update): No customer ID in subscription object.");

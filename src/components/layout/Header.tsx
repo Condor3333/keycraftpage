@@ -11,7 +11,7 @@ export default function Header() {
   const { data: session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   // Use configured app URL or default to app subdomain
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://app.keycraft.org:3001';
+  const appUrl = process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'http://app.keycraft.org:3001';
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);

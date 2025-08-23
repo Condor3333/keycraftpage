@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       <p><em>This email was sent from the KeyCraft contact form.</em></p>
     `;
 
-    console.log(`Attempting to send contact email. FROM: ${contactFormFromEmail}, TO: ${toEmail}, SUBJECT: KeyCraft Contact Form: Message from ${sanitizedName}`);
+
 
     const { data, error } = await resend.emails.send({
       from: contactFormFromEmail, 
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Error sending email via Resend.', errorDetail: error.message }, { status: 500 });
     }
 
-    console.log('Resend contact email sent successfully:', data);
+
     return NextResponse.json({ message: 'Message sent successfully! We will get back to you soon.', data }, { status: 200 });
 
   } catch (err: any) {

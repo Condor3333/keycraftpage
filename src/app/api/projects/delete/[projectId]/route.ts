@@ -12,6 +12,13 @@ const DeleteParamsSchema = z.object({
   projectId: z.string().uuid("Invalid Project ID format. Must be a UUID."),
 });
 
+// Define Zod schema for user session validation
+const UserSessionSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  hasPaid: z.boolean(),
+  activePlans: z.array(z.string()).optional(),
+});
+
 // Define the structure of a Project item expected from DynamoDB (to get S3 keys for deletion)
 interface ProjectDynamoDBItem {
     userId: string;
@@ -31,19 +38,34 @@ export async function DELETE(
   context: { params: Promise<{ projectId: string }> }
 ) {
   try {
+    // 1. Authentication validation
     const session = await auth();
     if (!session || !session.user || !session.user.id) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
-    const userId = session.user.id;
 
-    // Await params since they are now a Promise in Next.js 15
+    // 2. Validate user session with Zod
+    const userValidation = UserSessionSchema.safeParse({
+      userId: session.user.id,
+      hasPaid: session.user.hasPaid === true,
+      activePlans: session.user.activePlans,
+    });
+
+    if (!userValidation.success) {
+      return NextResponse.json({ 
+        error: "Invalid user session", 
+        details: userValidation.error.errors 
+      }, { status: 400 });
+    }
+
+    const { userId } = userValidation.data;
+
+    // 3. Validate route parameters with Zod
     const params = await context.params;
     
     // Log the received params object for debugging
     console.log("[API Delete Project] Received params:", JSON.stringify(params));
 
-    // Validate params with Zod
     const paramsValidationResult = DeleteParamsSchema.safeParse({ projectId: params.projectId });
     if (!paramsValidationResult.success) {
       return NextResponse.json(

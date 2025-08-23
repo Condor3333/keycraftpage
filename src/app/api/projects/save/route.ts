@@ -114,17 +114,17 @@ const uploadToS3 = async (bucket: string, key: string, data: any, contentType: s
   };
   
   await s3.upload(s3Params).promise();
-  console.log(`[Server Save S3] Successfully uploaded ${key} to ${bucket}`);
+  
   return key;
 };
 
 // Helper function to delete from S3 with batching
 const deleteFromS3 = async (bucket: string, key: string | undefined | null): Promise<void> => {
   if (!key) return;
-  console.log(`[Server Save S3] Attempting to delete ${key} from bucket ${bucket}`);
+  
   try {
     await s3.deleteObject({ Bucket: bucket, Key: key }).promise();
-    console.log(`[Server Save S3] Successfully deleted ${key} from ${bucket}`);
+    
   } catch (error) {
     console.error(`[Server Save S3] Failed to delete ${key} from ${bucket}:`, error);
   }
@@ -162,7 +162,7 @@ const uploadBase64ImageToS3 = async (bucket: string, keyPrefix: string, base64Da
   };
 
   await s3.upload(s3Params).promise();
-  console.log(`[Server Save S3] Successfully uploaded base64 image as ${s3Key} to ${bucket}`);
+  
   return s3Key;
 };
 
@@ -200,9 +200,9 @@ export async function POST(req: NextRequest) {
       thumbnailHasChanged
     } = validatedBody;
 
-    console.log(`[Server Save] Received request for project ID: ${projectId}`);
-    console.log(`[Server Save] backgroundImageHasChanged flag: ${backgroundImageHasChanged}`);
-    console.log(`[Server Save] backgroundImagePayload type: ${typeof backgroundImagePayload}, length: ${typeof backgroundImagePayload === 'string' ? backgroundImagePayload.length : 'N/A'}`);
+    
+    
+    
 
     if (!projectId || !name || bpm === undefined || !timeSignature) {
       return NextResponse.json({ message: 'Missing required project metadata fields' }, { status: 400 });
@@ -277,7 +277,7 @@ export async function POST(req: NextRequest) {
           
           const s3Key = `users/${userId}/projects/${projectId}/bundled-data.json`;
           finalKeys.bundledProjectDataS3Key = await uploadToS3(S3_PROJECT_DATA_BUCKET, s3Key, bundledData, 'application/json');
-          console.log('[Server Save] Bundled project data uploaded to:', s3Key);
+          
         })()
       );
     } else {

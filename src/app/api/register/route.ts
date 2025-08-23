@@ -27,7 +27,6 @@ interface NewUserDynamo {
   status: UserStatus;
   dateCreated: string; // ISO Date string
   dateModified: string; // ISO Date string
-  accounts?: any[]; // For potential OAuth linking consistency
 }
 
 // Define Zod schema for registration input
@@ -102,7 +101,6 @@ export async function POST(req: Request) {
       status: 'pending_verification',
       dateCreated: now.toISOString(),
       dateModified: now.toISOString(),
-      accounts: [], // Initialize accounts array
     };
 
     const putParams: AWS.DynamoDB.DocumentClient.PutItemInput = {
@@ -148,7 +146,7 @@ export async function POST(req: Request) {
         if (emailResponse.error) {
           console.error("Failed to send welcome/verification email:", emailResponse.error);
         } else if (emailResponse.data && emailResponse.data.id) {
-          console.log("Welcome/verification email sent successfully:", emailResponse.data.id);
+
         } else {
           console.warn("Welcome/verification email may have sent, but no ID was returned.");
         }

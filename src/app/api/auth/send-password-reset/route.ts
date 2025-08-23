@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     // Always return a success-like message to prevent user enumeration.
     if (!user || !user.id) {
-      console.log(`Password reset requested for non-existent user: ${email}`);
+      
       return NextResponse.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
     }
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       passwordResetExpires,
     } as any);
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://keycraft.org:3000'}/reset-password?token=${resetToken}`;
     
     const emailHtml = `
       <h1>You requested a password reset</h1>

@@ -12,18 +12,15 @@ export default function Hero() {
 
   const isLoading = status === "loading";
   // The appUrl should point to the separate editor application
-  // In development, use the IP address
-  const isDev = process.env.NODE_ENV === 'development';
-  const appUrl = isDev ? 'http://192.168.2.19:3001' : (process.env.NEXT_PUBLIC_APP_URL || 'http://app.keycraft.org:3001');
+  const appUrl = process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'http://app.keycraft.org:3001';
 
   const heroVideoSrc = getPublicAssetUrl("/KCMPvideos/KCVidEditor.mp4");
-  console.log('Hero video src:', heroVideoSrc);
 
   return (
     <section className={styles.hero}>
       <div className={styles.heroContent}>
         <h1 className={styles.headline}>
-          Create Piano Rolls
+          Compose and Learn
           <br />
           Intuitively
         </h1>
@@ -53,7 +50,7 @@ export default function Hero() {
           </div>
           <div className={styles.featureItem}>
             <span className={styles.checkmark}>✓</span>
-            <span>Access on All Devices</span>
+            <span>Access on Desktop, Tablet, and Phone</span>
           </div>
         </div>
         <div className={styles.ctaButtons}>

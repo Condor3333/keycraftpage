@@ -12,6 +12,9 @@ if (!process.env.S3_BACKGROUND_IMAGES_BUCKET) {
 if (!process.env.S3_THUMBNAILS_BUCKET) {
   throw new Error('Invalid/Missing environment variable: "S3_THUMBNAILS_BUCKET"');
 }
+if (!process.env.S3_MIDI_LIBRARY_BUCKET) {
+  throw new Error('Invalid/Missing environment variable: "S3_MIDI_LIBRARY_BUCKET"');
+}
 if (!process.env.DYNAMODB_PROJECTS_TABLE) {
   throw new Error('Invalid/Missing environment variable: "DYNAMODB_PROJECTS_TABLE"');
 }
@@ -35,5 +38,6 @@ export { s3, dynamoDb };
 export const S3_PROJECT_DATA_BUCKET = process.env.S3_PROJECT_DATA_BUCKET!;
 export const S3_BACKGROUND_IMAGES_BUCKET = process.env.S3_BACKGROUND_IMAGES_BUCKET!;
 export const S3_THUMBNAILS_BUCKET = process.env.S3_THUMBNAILS_BUCKET!;
+export const S3_MIDI_LIBRARY_BUCKET = process.env.S3_MIDI_LIBRARY_BUCKET!;
 export const DYNAMODB_PROJECTS_TABLE = process.env.DYNAMODB_PROJECTS_TABLE!;
 export const DYNAMODB_USERS_TABLE = process.env.DYNAMODB_USERS_TABLE!;

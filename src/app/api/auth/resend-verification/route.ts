@@ -94,7 +94,7 @@ export async function POST(req: Request) {
           activationLink,
         }),
       });
-      console.log(`New verification email sent to ${user.email}`);
+      
     } else {
       console.warn('Resend API: Environment variables for sending email are not fully configured.');
     }
