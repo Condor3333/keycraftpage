@@ -61,9 +61,7 @@ const Footer = () => {
 
         <div className="footer-bottom-section">
           <p className="copyright">&copy; 2025 Made by KeyCraft Team</p>
-          <div className="footer-badge">
-            {/* <span role="img" aria-label="checkmark">&#x2713;</span> IDK WHAT THIS IS YET NOT SOC 2 Certified */}
-          </div>
+          
         </div>
       </div>
     </footer>

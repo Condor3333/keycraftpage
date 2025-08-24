@@ -72,7 +72,7 @@ if (redisUrl && redisToken) {
     // Video-to-MIDI Rate Limiter (resource-intensive operations)
     videoToMidiRateLimiter = new Ratelimit({
       redis: redisClient,
-      limiter: Ratelimit.slidingWindow(3, '60 m'), // 3 transcriptions per hour
+      limiter: Ratelimit.slidingWindow(10, '60 m'), // 10 transcriptions per hour
       analytics: true,
       prefix: 'keycraft_ratelimit_video_to_midi',
     });
@@ -96,7 +96,7 @@ if (redisUrl && redisToken) {
     // Project Delete Rate Limiter
     projectDeleteRateLimiter = new Ratelimit({
       redis: redisClient,
-      limiter: Ratelimit.slidingWindow(10, '60 m'), // 10 deletions per hour
+      limiter: Ratelimit.slidingWindow(20, '60 m'), // 20 deletions per hour
       analytics: true,
       prefix: 'keycraft_ratelimit_project_delete',
     });

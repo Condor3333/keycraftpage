@@ -21,6 +21,9 @@ if (!process.env.DYNAMODB_PROJECTS_TABLE) {
 if (!process.env.DYNAMODB_USERS_TABLE) {
   throw new Error('Invalid/Missing environment variable: "DYNAMODB_USERS_TABLE"');
 }
+if (!process.env.DYNAMODB_TRANSCRIBE_JOBS_TABLE) {
+  throw new Error('Invalid/Missing environment variable: "DYNAMODB_TRANSCRIBE_JOBS_TABLE"');
+}
 
 // Configure AWS SDK
 AWS.config.update({
@@ -41,3 +44,4 @@ export const S3_THUMBNAILS_BUCKET = process.env.S3_THUMBNAILS_BUCKET!;
 export const S3_MIDI_LIBRARY_BUCKET = process.env.S3_MIDI_LIBRARY_BUCKET!;
 export const DYNAMODB_PROJECTS_TABLE = process.env.DYNAMODB_PROJECTS_TABLE!;
 export const DYNAMODB_USERS_TABLE = process.env.DYNAMODB_USERS_TABLE!;
+export const DYNAMODB_TRANSCRIBE_JOBS_TABLE = process.env.DYNAMODB_TRANSCRIBE_JOBS_TABLE!;

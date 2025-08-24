@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '../../../../../auth';
+import { z } from 'zod';
 
 const DEFAULT_APP_ORIGIN = process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'http://app.keycraft.org:3001';
 const ALLOWED_ORIGINS = new Set<string>([
   DEFAULT_APP_ORIGIN,
   process.env.NEXT_PUBLIC_APP_ORIGIN || DEFAULT_APP_ORIGIN,
 ]);
+
+// Zod schema for origin validation
+const OriginSchema = z.string().url().refine((origin) => {
+  return ALLOWED_ORIGINS.has(origin);
+}, {
+  message: "Origin not allowed"
+}).optional();
 
 function withCors(response: NextResponse, origin: string | null) {
   const allowed = origin && ALLOWED_ORIGINS.has(origin) ? origin : (process.env.NEXT_PUBLIC_APP_ORIGIN || DEFAULT_APP_ORIGIN);
@@ -19,10 +27,22 @@ function withCors(response: NextResponse, origin: string | null) {
 
 export async function GET(req: NextRequest) {
   try {
+    // Validate origin header
+    const origin = req.headers.get('origin');
+    const originValidation = OriginSchema.safeParse(origin);
+    
+    if (origin && !originValidation.success) {
+      const res = NextResponse.json({ 
+        error: 'Invalid origin', 
+        details: originValidation.error.errors 
+      }, { status: 403 });
+      return withCors(res, null);
+    }
+
     const session = await auth();
     if (!session || !session.user) {
       const res = NextResponse.json({ error: 'No session found' }, { status: 401 });
-      return withCors(res, req.headers.get('origin'));
+      return withCors(res, origin);
     }
 
     const sessionData = {
@@ -41,11 +61,11 @@ export async function GET(req: NextRequest) {
     };
 
     const res = NextResponse.json(sessionData);
-    return withCors(res, req.headers.get('origin'));
+    return withCors(res, origin);
   } catch (error) {
     console.error('Session bridge error:', error);
     const res = NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    return withCors(res, req.headers.get('origin'));
+    return withCors(res, origin);
   }
 }
 

@@ -26,6 +26,7 @@ interface ProjectDynamoDBItem {
     projectData?: {
         midiDataS3Key?: string;
         textAnnotationsS3Key?: string;
+        bundledProjectDataS3Key?: string | null;
     };
     appearance?: {
         backgroundImageS3Key?: string | null;
@@ -92,6 +93,9 @@ export async function DELETE(
         if (projectItem.projectData?.textAnnotationsS3Key) {
             s3ObjectsToDelete.push({ Key: projectItem.projectData.textAnnotationsS3Key });
         }
+        if (projectItem.projectData?.bundledProjectDataS3Key) {
+            s3ObjectsToDelete.push({ Key: projectItem.projectData.bundledProjectDataS3Key });
+        }
         if (projectItem.appearance?.backgroundImageS3Key) {
             s3ObjectsToDelete.push({ Key: projectItem.appearance.backgroundImageS3Key });
         }
@@ -112,6 +116,9 @@ export async function DELETE(
     }
     if (projectItem?.projectData?.textAnnotationsS3Key) {
         deletePromises.push(s3.deleteObject({ Bucket: S3_PROJECT_DATA_BUCKET, Key: projectItem.projectData.textAnnotationsS3Key }).promise());
+    }
+    if (projectItem?.projectData?.bundledProjectDataS3Key) {
+        deletePromises.push(s3.deleteObject({ Bucket: S3_PROJECT_DATA_BUCKET, Key: projectItem.projectData.bundledProjectDataS3Key }).promise());
     }
     if (projectItem?.appearance?.backgroundImageS3Key) {
         deletePromises.push(s3.deleteObject({ Bucket: S3_BACKGROUND_IMAGES_BUCKET, Key: projectItem.appearance.backgroundImageS3Key }).promise());

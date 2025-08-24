@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDBAdapter } from '@/lib/dynamodb-adapter';
 import crypto from 'crypto';
 import { Resend } from 'resend';
+import { z } from 'zod';
+
+// Zod schema for password reset request
+const PasswordResetRequestSchema = z.object({
+  email: z.string().email('Invalid email format').min(1, 'Email is required').max(254, 'Email too long'),
+});
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
@@ -19,11 +25,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { email } = await req.json();
+    const body = await req.json();
 
-    if (!email) {
-      return NextResponse.json({ message: 'Email is required.' }, { status: 400 });
+    // Validate request body with Zod
+    const validationResult = PasswordResetRequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json({ 
+        message: 'Invalid request data.', 
+        errors: validationResult.error.flatten().fieldErrors 
+      }, { status: 400 });
     }
+
+    const { email } = validationResult.data;
 
     if (!adapter.getUserByEmail || !adapter.updateUser) {
         throw new Error('Adapter methods are not defined');

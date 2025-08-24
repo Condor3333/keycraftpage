@@ -93,11 +93,11 @@ export default function Header() {
               rel="noopener noreferrer"
               className={styles.downloadButton}
             >
-              Start Keycraft
+              Start KeyCraft
             </a>
           ) : (
             <Link href="/#membership" className={styles.downloadButton}>
-              Start Keycraft
+              Start KeyCraft
             </Link>
           )}
         </div>
@@ -150,7 +150,7 @@ export default function Header() {
                   className={`${styles.downloadButton} ${styles.mobileDownloadButton}`}
                   onClick={toggleMenu}
                 >
-                  Start Keycraft
+                  Start KeyCraft
                 </a>
               ) : (
                 <Link 
@@ -158,7 +158,7 @@ export default function Header() {
                   className={`${styles.downloadButton} ${styles.mobileDownloadButton}`}
                   onClick={toggleMenu}
                 >
-                  Start Keycraft
+                  Start KeyCraft
                 </Link>
               )}
             </div>

@@ -49,7 +49,7 @@ const nextConfig = {
         headers: [
           { key: "Access-Control-Allow-Credentials", value: "true" },
           { key: "Access-Control-Allow-Methods", value: "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
-          { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Cookie, Set-Cookie" },
+          { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Cookie, Set-Cookie, Authorization, stripe-signature, X-Transcription-Secret, X-Notation-Secret" },
           { key: "Access-Control-Allow-Origin", value: process.env.NODE_ENV === 'production' ? (process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'https://app.keycraft.org') : (process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'http://app.keycraft.org:3001') },
           { key: "Access-Control-Expose-Headers", value: "Set-Cookie" },
         ],

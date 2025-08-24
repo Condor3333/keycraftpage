@@ -155,7 +155,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         const emailResponse = await resend.emails.send({
                             from: process.env.FROM_EMAIL,
                             to: [userFromDb.email], 
-                            subject: 'Keycraft - Please Verify Your Account',
+                            subject: 'KeyCraft - Please Verify Your Account',
                             react: WelcomeEmail({ 
                                 userName: userNameForEmail,
                                 activationLink

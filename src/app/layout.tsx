@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Compose and Learn Piano | KeyCraft",
-  description: "KeyCraft is a piano roll editor that makes music composition simple, intuitive, and enjoyable.",
+  title: "KeyCraft | Piano Roll Editor - Create Music and Learn Piano",
+  description: "KeyCraft is a complete piano platform with AI transcription, a comprehensive music editor, and a song library. Everything you need to create music and learn piano!",
   icons: {
     icon: getPublicAssetUrl("/images/logo.png"),
     shortcut: getPublicAssetUrl("/images/logo.png"),

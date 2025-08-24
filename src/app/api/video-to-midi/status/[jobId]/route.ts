@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dynamoDb } from '@/lib/aws-config';
+import { dynamoDb, DYNAMODB_TRANSCRIBE_JOBS_TABLE } from '@/lib/aws-config';
 import { z } from 'zod';
-
-const DYNAMODB_TRANSCRIBE_JOBS_TABLE = process.env.DYNAMODB_TRANSCRIBE_JOBS_TABLE!;
 
 // Validation schema for job ID
 const JobIdSchema = z.object({

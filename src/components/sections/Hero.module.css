@@ -1,50 +1,84 @@
 .hero {
-  color: #fff; /* White text */
+  color: #fff;
+  position: relative;
   display: flex;
-  justify-content: space-between;
-  align-items: center; /* Vertically center content */
-  padding: 60px 70px; /* Adjusted padding, especially top */
-  min-height: calc(100vh - 73px); /* Account for header height */
-  box-sizing: border-box;
-  max-width: 2000px;
-  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  margin-top: -73px;
+  padding-top: 73px;
 }
 
+/* Background Video Container */
+.videoBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.backgroundVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+  background-color: #000;
+}
+
+.videoOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 2;
+}
+
+/* Centered Content */
 .heroContent {
-  margin-top: 0px;
-  /* margin-top: 300px; Removed this, as align-items on .hero handles centering */
-  flex: 1; /* Allow content to take available space on the left */
-  max-width: 1000px; /* Adjusted max-width slightly */
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center; /* Center content vertically within its container */
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  max-width: 800px;
+  padding: 40px 24px;
+  margin: 0 auto;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .headline {
-  font-size: 3.2rem; /* Further reduced font size */
+  font-size: 3.5rem;
   font-weight: 700;
-  margin-bottom: 24px; /* Adjusted margin */
-  line-height: 1.15; /* Adjusted line-height */
-  background: linear-gradient(90deg, #ffffff, #b3b3b3);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  margin-bottom: 24px;
+  line-height: 1.1;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .subHeadline {
-  font-size: 18px; /* Adjusted font size */
-  color: #a0a0a0;
-  max-width: 650px; /* Adjusted max-width */
-  margin-bottom: 32px; /* Adjusted margin */
-  line-height: 1.7;
+  font-size: 20px;
+  color: #ffffff;
+  max-width: 600px;
+  margin: 0 auto 32px;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .featureList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .featureItem {
@@ -53,155 +87,114 @@
   gap: 12px;
   font-size: 16px;
   color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .checkmark {
   color: #6495ED;
   font-size: 18px;
   flex-shrink: 0;
+  text-shadow: 0 0 8px rgba(100, 149, 237, 0.5);
 }
 
 .ctaButtons {
   display: flex;
-  gap: 16px;
-  margin-bottom: 0; /* Removed bottom margin as .heroContent handles spacing */
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .button {
-  padding: 14px 28px; /* Adjusted padding */
+  padding: 16px 32px;
   border-radius: 8px;
   text-decoration: none;
-  font-size: 16px; /* Adjusted font size */
-  font-weight: 500;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .button:hover {
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 .secondaryButton {
-  background-color: #5865F2; /* Discord brand color */
+  background-color: #5865F2;
   color: #fff;
-  border: none;
+  border: 2px solid #5865F2;
 }
 
 .secondaryButton:hover {
-  background-color: #4752C4; /* Slightly darker on hover for feedback */
-}
-
-.editorPromo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.editorIcon {
-  border-radius: 4px; /* Slight rounding if the image isn't already an icon shape */
-}
-
-.editorText {
-  font-size: 15px;
-  color: #a0a0a0;
-}
-
-.videoFrame {
-  margin-top: 0px;
-  width: 600px; /* Adjusted width */
-  height: 450px; /* Adjusted height */
-  background-color: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2); /* Enhanced white glow */
-  margin-left: 40px; /* Adjusted margin */
-  border: 1px solid rgba(255, 255, 255, 0.2); /* Slightly more visible border */
-  display: flex; /* For placeholder text centering */
-  align-items: center; /* For placeholder text centering */
-  justify-content: center; /* For placeholder text centering */
-}
-
-.videoPlaceholder {
-  /* Styles for placeholder text, already centered by .videoFrame flex properties */
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 20px;
+  background-color: #4752C4;
+  border-color: #4752C4;
 }
 
 .loadingButton {
   opacity: 0.7;
-  cursor: default;
+  cursor: not-allowed;
 }
 
-@media (max-width: 1200px) { /* Added another breakpoint for smoother transition */
-  .hero {
-    padding: 40px 50px;
-    flex-direction: column; /* Stack earlier for better spacing */
-    text-align: center;
-  }
-  .heroContent {
-    align-items: center; /* Center content when stacked */
-    max-width: 100%;
-    margin-bottom: 40px;
-    margin-top: 0px; /* Reduced from 520px */
-  }
-   .headline {
-    font-size: 3.8rem;
-  }
-  .subHeadline {
-    max-width: 90%;
-    font-size: 18px;
-  }
-  .featureList {
-    gap: 10px;
-  }
-  .featureItem {
-    font-size: 15px;
-  }
-  .videoFrame {
-    width: 90%;
-    max-width: 600px; /* Limit video width on smaller screens */
-    height: auto; /* Maintain aspect ratio */
-    aspect-ratio: 16 / 9;
-    margin-left: 0;
-    margin-top: 20px; /* Reduced from 40px */
-  }
-  .ctaButtons {
-    justify-content: center;
-  }
-}
-
+/* Responsive Design */
 @media (max-width: 768px) {
   .hero {
+    min-height: calc(100vh - 60px);
     padding: 40px 20px;
   }
 
   .headline {
-    font-size: 3rem; /* Adjusted for mobile */
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+  }
+
+  .subHeadline {
+    font-size: 18px;
+    margin-bottom: 28px;
+  }
+
+  .featureList {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .featureItem {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+
+  .ctaButtons {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .button {
+    padding: 14px 28px;
+    font-size: 15px;
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .headline {
+    font-size: 2rem;
   }
 
   .subHeadline {
     font-size: 16px;
   }
 
-  .featureList {
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-
-  .featureItem {
-    font-size: 14px;
-  }
-
-  .ctaButtons {
-    flex-direction: column;
-    width: 100%;
-    max-width: 320px; /* Limit button width on mobile */
-    margin: 0 auto; /* Center buttons */
-  }
-
-  .button {
-    width: 100%;
-    text-align: center;
-    font-size: 15px;
-    padding: 12px 24px;
+  .heroContent {
+    padding: 0 16px;
   }
 }

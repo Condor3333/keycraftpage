@@ -12,10 +12,10 @@ export const WelcomeEmail = ({
 }: WelcomeEmailProps) => (
   <Html>
     <Head />
-    <Preview>Welcome to Keycraft!</Preview>
+    <Preview>Welcome to KeyCraft!</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={heading}>Welcome to Keycraft, {userName}!</Heading>
+        <Heading style={heading}>Welcome to KeyCraft, {userName}!</Heading>
         <Text style={paragraph}>
           Thanks for signing up. We're excited to have you on board.
         </Text>
@@ -27,7 +27,7 @@ export const WelcomeEmail = ({
         </Button>
         <Hr style={hr} />
         <Text style={footer}>
-          Keycraft | Your Awesome App
+          KeyCraft | Your Awesome App
         </Text>
       </Container>
     </Body>

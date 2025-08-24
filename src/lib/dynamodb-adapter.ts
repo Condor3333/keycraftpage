@@ -29,11 +29,18 @@ export interface CustomAdapterUser extends AdapterUser {
     sessions?: AdapterSession[];
     transcriptionCount?: number;
     transcriptionMonth?: string;
+    midiDownloads?: {
+        count: number;
+        resetDate: string;
+        lastDownloadDate: string;
+        totalDownloads: number;
+    };
 }
 
 interface CustomDynamoDBAdapter extends Adapter {
     getUserByEmailVerificationToken(token: string): Promise<CustomAdapterUser | null>;
     getUserByPasswordResetToken(token: string): Promise<CustomAdapterUser | null>;
+    initializeMidiDownloads(userId: string): Promise<void>;
 }
 
 // AdapterUser fields that NextAuth expects
@@ -159,6 +166,12 @@ export function DynamoDBAdapter(): CustomDynamoDBAdapter {
         sessions: [],
         dateCreated: now.toISOString(),
         dateModified: now.toISOString(),
+        midiDownloads: {
+          count: 0,
+          resetDate: now.toISOString(),
+          lastDownloadDate: now.toISOString(),
+          totalDownloads: 0
+        }
       };
       
       if ((user as any).firstName) userData.firstName = (user as any).firstName;
@@ -393,5 +406,23 @@ export function DynamoDBAdapter(): CustomDynamoDBAdapter {
             throw error;
         }
     },
+    async initializeMidiDownloads(userId: string): Promise<void> {
+        const user = await AdapterInternals._getUserById(userId);
+        if (!user) {
+            throw new Error(`User with ID ${userId} not found.`);
+        }
+
+        if (!user.midiDownloads) {
+            await AdapterInternals._updateUser({
+                id: userId,
+                midiDownloads: {
+                    count: 0,
+                    resetDate: new Date().toISOString(),
+                    lastDownloadDate: new Date().toISOString(),
+                    totalDownloads: 0
+                }
+            } as Partial<CustomAdapterUser> & Pick<CustomAdapterUser, "id">);
+        }
+    }
   };
 } 

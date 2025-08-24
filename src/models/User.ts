@@ -50,6 +50,14 @@ export interface UserDynamoDBItem {
   // Email verification specific (often managed by NextAuth adapter or your custom logic)
   emailVerificationToken?: string | null;
   emailVerificationTokenExpires?: string | null; // ISO Date string (consistent with adapter)
+
+  // MIDI Download tracking
+  midiDownloads?: {
+    count: number;           // Current month's download count
+    resetDate: string;       // When to reset the counter (ISO date string)
+    lastDownloadDate: string; // Last download timestamp (ISO date string)
+    totalDownloads: number;  // Lifetime download count
+  };
 }
 
 // Note: The User class with MongoDB-specific methods (save, findByEmail, etc.) has been removed.

@@ -1,26 +1,34 @@
 "use client";
 
-
-import Link from 'next/link'; // Import Link for buttons if they navigate
+import Link from 'next/link';
 import styles from './Hero.module.css';
-import { useSession } from 'next-auth/react'; // Import useSession
-import { getPublicAssetUrl } from '../../config/cdn';
-
+import { useSession } from 'next-auth/react';
 
 export default function Hero() {
-  const { data: session, status } = useSession(); // Get session status
+  const { data: session, status } = useSession();
 
   const isLoading = status === "loading";
-  // The appUrl should point to the separate editor application
   const appUrl = process.env.NEXT_PUBLIC_APP_EDITOR_URL || 'http://app.keycraft.org:3001';
-
-  const heroVideoSrc = getPublicAssetUrl("/KCMPvideos/KCVidEditor.mp4");
 
   return (
     <section className={styles.hero}>
+      {/* Background Video */}
+      <div className={styles.videoBackground}>
+        <video
+          src="/Background Loop.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          className={styles.backgroundVideo}
+        />
+        <div className={styles.videoOverlay}></div>
+      </div>
+
+      {/* Centered Content */}
       <div className={styles.heroContent}>
         <h1 className={styles.headline}>
-          Compose and Learn
+          Create Piano Rolls
           <br />
           Intuitively
         </h1>
@@ -28,9 +36,9 @@ export default function Hero() {
           KeyCraft is a piano roll editor that makes music composition simple, intuitive, and enjoyable.
         </p>
         <div className={styles.featureList}>
-        <div className={styles.featureItem}>
+          <div className={styles.featureItem}>
             <span className={styles.checkmark}>✓</span>
-            <span>Full Piano Roll Editor</span>
+            <span>Complete Music Editor</span>
           </div>
           <div className={styles.featureItem}>
             <span className={styles.checkmark}>✓</span>
@@ -38,11 +46,11 @@ export default function Hero() {
           </div>
           <div className={styles.featureItem}>
             <span className={styles.checkmark}>✓</span>
-            <span>Customize Visuals</span>
+            <span>Customize Visuals *NEW*</span>
           </div>
           <div className={styles.featureItem}>
             <span className={styles.checkmark}>✓</span>
-            <span>Customize Audio</span>
+            <span>Customize Audio *NEW*</span>
           </div>
           <div className={styles.featureItem}>
             <span className={styles.checkmark}>✓</span>
@@ -50,7 +58,7 @@ export default function Hero() {
           </div>
           <div className={styles.featureItem}>
             <span className={styles.checkmark}>✓</span>
-            <span>Access on Desktop, Tablet, and Phone</span>
+            <span>Desktop, Tablet, and Phone</span>
           </div>
         </div>
         <div className={styles.ctaButtons}>
@@ -69,21 +77,6 @@ export default function Hero() {
             Join Discord
           </a>
         </div>
-      </div>
-      <div className={styles.videoFrame}>
-        <video
-          src={heroVideoSrc}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className={styles.previewImage}
-          style={{
-            width: '120%',
-            height: '120%',
-            objectFit: 'contain'
-          }}
-        />
       </div>
     </section>
   );
